@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entropic Spread | Mathematical Research</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            /* Rich, Earthy & Premium Dark Palette */
+            --bg-deep-brown: #1a1513;
+            --text-primary: #f2ece4;
+            --text-secondary: #a3968d;
+            --accent-orange: #ff6a13;
+            --accent-orange-glow: rgba(255, 106, 19, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-deep-brown);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        /* ---------------------------------
+           Premium Ventriloc Data Elements 
+           --------------------------------- */
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.04;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        .data-curves {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.6;
+        }
+
+        /* ---------------------------------
+           Layout & Typography 
+           --------------------------------- */
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 12vh 5vw;
+            display: flex;
+            flex-direction: column;
+            gap: 4rem;
+        }
+
+        /* Organic Offset Alignment */
+        .header-section {
+            transform: translateX(-3%);
+            position: relative;
+        }
+
+        .body-section {
+            transform: translateX(4%);
+            max-width: 750px;
+            position: relative;
+            align-self: flex-end;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.5rem, 5vw, 4.5rem);
+            line-height: 1.1;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+
+        h1 i {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        p {
+            font-size: 1.125rem;
+            line-height: 1.85;
+            font-weight: 300;
+            letter-spacing: 0.01em;
+            color: rgba(242, 236, 228, 0.9);
+        }
+
+        /* ---------------------------------
+           Hand-Drawn & Sketchy Elements
+           --------------------------------- */
+        .handwritten {
+            font-family: 'Caveat', cursive;
+            color: var(--accent-orange);
+            position: absolute;
+            transform: rotate(-4deg);
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .note-top {
+            top: -40px;
+            left: 20px;
+            opacity: 0.8;
+            font-size: 1.25rem;
+        }
+
+        .note-side {
+            right: -120px;
+            top: 40px;
+            transform: rotate(8deg);
+            font-size: 1.6rem;
+            max-width: 150px;
+            white-space: normal;
+            line-height: 1.2;
+        }
+
+        .highlight-wrapper {
+            position: relative;
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        .sketch-underline {
+            position: absolute;
+            bottom: -10px;
+            left: -5%;
+            width: 110%;
+            height: 25px;
+            pointer-events: none;
+            overflow: visible;
+        }
+
+        .sketchy-box {
+            padding: 3rem 3.5rem;
+            /* Creates the organic, imperfect hand-drawn border effect */
+            border: 2px solid var(--accent-orange);
+            border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+            background: rgba(26, 21, 19, 0.4);
+            backdrop-filter: blur(8px);
+            box-shadow: 10px 10px 0px rgba(255, 106, 19, 0.05);
+            transition: all 0.4s ease;
+        }
+
+        .sketchy-box:hover {
+            border-radius: 15px 225px 15px 255px / 255px 15px 225px 15px;
+            background: rgba(255, 106, 19, 0.02);
+        }
+
+        .doodle-arrow {
+            position: absolute;
+            right: -60px;
+            top: 20px;
+            width: 50px;
+            height: 50px;
+            transform: rotate(15deg);
+        }
+
+        /* ---------------------------------
+           Responsive Adjustments
+           --------------------------------- */
+        @media (max-width: 900px) {
+            .note-side {
+                right: 0;
+                top: -50px;
+                left: 20px;
+                transform: rotate(-3deg);
+            }
+
+            .doodle-arrow {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+
+            .header-section,
+            .body-section {
+                transform: none;
+                align-self: flex-start;
+            }
+
+            .sketchy-box {
+                padding: 2rem;
+            }
+
+            .container {
+                gap: 5rem;
+                padding-top: 15vh;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Premium Texture Overlay -->
+    <div class="noise-overlay"></div>
+
+    <!-- Ventriloc Style Smooth Data Curves -->
+    <svg class="data-curves" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice"
+        xmlns="http://www.w3.org/2000/svg">
+        <path d="M-100 800 C 300 850, 600 300, 1500 400" fill="none" stroke="rgba(255, 255, 255, 0.03)"
+            stroke-width="2" />
+        <path d="M-50 900 C 400 600, 800 100, 1600 150" fill="none" stroke="rgba(255, 106, 19, 0.05)"
+            stroke-width="1.5" />
+        <path d="M-200 400 C 200 300, 800 800, 1500 700" fill="none" stroke="rgba(255, 255, 255, 0.02)"
+            stroke-width="1" />
+        <path d="M100 1000 C 500 700, 900 400, 1400 0" fill="none" stroke="rgba(255, 106, 19, 0.04)" stroke-width="3" />
+    </svg>
+
+    <div class="container">
+
+        <!-- Header Section -->
+        <header class="header-section">
+            <span class="handwritten note-top">Journal Entry 01 - The Origin</span>
+            <h1>
+                A Mathematical Proof of <br>
+                <span class="highlight-wrapper">
+                    Entropic Spread
+                    <!-- Sketchy SVG Underline -->
+                    <svg class="sketch-underline" viewBox="0 0 300 30" preserveAspectRatio="none">
+                        <path d="M5,20 Q100,5 295,15" fill="none" stroke="var(--accent-orange)" stroke-width="3"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                        <path d="M10,24 Q150,8 290,20" fill="none" stroke="var(--accent-orange)" stroke-width="1.5"
+                            stroke-linecap="round" opacity="0.6" />
+                    </svg>
+                </span> <br>
+                <i>in Random Systems</i>
+            </h1>
+        </header>
+
+        <!-- Body Section -->
+        <main class="body-section sketchy-box">
+
+            <svg class="doodle-arrow" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <path d="M10,80 Q40,50 80,20" fill="none" stroke="var(--accent-orange)" stroke-width="3"
+                    stroke-linecap="round" />
+                <path d="M60,15 L85,15 L80,40" fill="none" stroke="var(--accent-orange)" stroke-width="3"
+                    stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+
+            <span class="handwritten note-side">Wait, can we prove this?!</span>
+
+            <p>
+                One day I was reading something about Biology maybe, I saw that biology does not want to conserve the
+                entropy of the universe, rather its primary goal is to increase the entropy. I wonder right, the
+                universe work like that, but then I wonder why?
+                <br><br>
+                Can we proof that entropy always want to increase!? With mathematics?? So I made some hypothesis and
+                mathematical derivations, and tried to proof this phenomena useing some fundamental laws of nature,
+                better to say mathematics, fundamental laws of mathematics.
+            </p>
+        </main>
+
+    </div>
+
+</body>
+
+</html>
