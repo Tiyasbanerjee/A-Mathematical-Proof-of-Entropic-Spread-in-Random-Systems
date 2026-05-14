@@ -1,0 +1,1339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hypothesis 01 | The 1D Particle Race</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Rich, Earthy & Premium Dark Palette */
+            --bg-deep-brown: #1a1513;
+            --text-primary: #f2ece4;
+            --text-secondary: #a3968d;
+            --accent-orange: #ff6a13;
+            --accent-orange-glow: rgba(255, 106, 19, 0.15);
+            --paper-bg: #f4f1ea;
+            --paper-text: #3f2f24;
+            --ink-brown: #5b3f2c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #1a1613;
+            background-image: 
+                linear-gradient(0deg, transparent 24%, rgba(42, 32, 27, 0.15) 25%, rgba(42, 32, 27, 0.15) 26%, transparent 27%, transparent 74%, rgba(42, 32, 27, 0.15) 75%, rgba(42, 32, 27, 0.15) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(42, 32, 27, 0.15) 25%, rgba(42, 32, 27, 0.15) 26%, transparent 27%, transparent 74%, rgba(42, 32, 27, 0.15) 75%, rgba(42, 32, 27, 0.15) 76%, transparent 77%, transparent);
+            background-size: 52px 52px;
+            background-position: 0 0;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        /* ---------------------------------
+           Premium Ventriloc Data Elements 
+           --------------------------------- */
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.08;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' fill='%232A201B'/%3E%3C/svg%3E");
+        }
+
+        .data-curves {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.4;
+        }
+
+        /* ---------------------------------
+           Layout & Typography 
+           --------------------------------- */
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 12vh 5vw;
+            display: flex;
+            flex-direction: column;
+            gap: 4rem;
+        }
+
+        /* Organic Offset Alignment */
+        .header-section {
+            transform: translateX(-3%);
+            position: relative;
+        }
+
+        .body-section {
+            transform: translateX(4%);
+            max-width: 750px;
+            position: relative;
+            align-self: flex-end;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.5rem, 5vw, 4.5rem);
+            line-height: 1.1;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+
+        p {
+            font-family: 'Merriweather', serif;
+            font-size: 1.125rem;
+            line-height: 1.9;
+            font-weight: 300;
+            letter-spacing: 0.005em;
+            color: rgba(242, 236, 228, 0.9);
+        }
+
+        /* ---------------------------------
+           Hand-Drawn & Sketchy Elements
+           --------------------------------- */
+        .handwritten {
+            font-family: 'Caveat', cursive;
+            color: var(--accent-orange);
+            position: absolute;
+            transform: rotate(-4deg);
+            font-size: 1.5rem;
+            letter-spacing: 1px;
+            white-space: nowrap;
+        }
+
+        .note-top {
+            top: -40px;
+            left: 20px;
+            opacity: 0.8;
+            font-size: 1.25rem;
+        }
+
+        .note-side {
+            right: -140px;
+            top: 60px;
+            transform: rotate(6deg);
+            font-size: 1.6rem;
+            max-width: 150px;
+            white-space: normal;
+            line-height: 1.2;
+        }
+
+        .highlight-wrapper {
+            position: relative;
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        .sketch-underline {
+            position: absolute;
+            bottom: -5px;
+            left: -5%;
+            width: 110%;
+            height: 20px;
+            pointer-events: none;
+            overflow: visible;
+        }
+
+        .sketchy-box {
+            padding: 3rem 3.5rem;
+            border: 2px solid var(--accent-orange);
+            border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+            background: rgba(26, 21, 19, 0.4);
+            backdrop-filter: blur(8px);
+            box-shadow: 10px 10px 0px rgba(255, 106, 19, 0.05);
+            transition: all 0.4s ease;
+        }
+
+        .sketchy-box:hover {
+            border-radius: 15px 225px 15px 255px / 255px 15px 225px 15px;
+            background: rgba(255, 106, 19, 0.02);
+        }
+
+        .experiment-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .paper-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+
+        .paper-panel {
+            background: var(--paper-bg);
+            color: var(--paper-text);
+            border: 2px solid rgba(255, 106, 19, 0.75);
+            border-radius: 32px 18px 28px 22px / 18px 30px 20px 34px;
+            padding: 1.2rem;
+            box-shadow: 10px 10px 0 rgba(255, 106, 19, 0.1), inset 0 0 0 1px rgba(91, 63, 44, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .paper-panel::before {
+            content: "";
+            position: absolute;
+            inset: 7px;
+            border: 1.5px dashed rgba(91, 63, 44, 0.35);
+            border-radius: 26px 14px 25px 18px / 15px 24px 17px 27px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .panel-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            gap: 0.6rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .panel-title {
+            font-family: 'Caveat', cursive;
+            color: var(--ink-brown);
+            font-size: 1.6rem;
+            line-height: 1;
+        }
+
+        .panel-meta-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .panel-meta {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.92rem;
+            color: var(--ink-brown);
+            background: rgba(255, 106, 19, 0.1);
+            border: 1px dashed rgba(91, 63, 44, 0.55);
+            padding: 0.25rem 0.55rem;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: color 0.3s ease, background 0.3s ease;
+        }
+
+        .sim-canvas,
+        .graph-canvas {
+            width: 100%;
+            height: 250px;
+            display: block;
+            border-radius: 16px;
+            background: linear-gradient(180deg, #f8f6f0 0%, #f4f1ea 100%);
+            position: relative;
+            z-index: 2;
+        }
+
+        .panel-caption {
+            font-family: 'Caveat', cursive;
+            font-size: 1.15rem;
+            color: rgba(91, 63, 44, 0.7);
+            text-align: right;
+            margin-top: 0.6rem;
+            line-height: 1.25;
+            padding-right: 0.5rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .control-panel {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.75rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .sketch-control {
+            font-family: 'Caveat', cursive;
+            font-size: 1.35rem;
+            color: var(--ink-brown);
+            background: transparent;
+            border: 2px solid rgba(255, 106, 19, 0.8);
+            border-radius: 21px 12px 22px 13px / 13px 24px 12px 21px;
+            padding: 0.35rem 1rem;
+            cursor: pointer;
+            transition: transform 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .sketch-control:hover {
+            transform: translateY(-1px) rotate(-1deg);
+            color: #ffffff;
+            background: rgba(91, 63, 44, 0.85);
+            box-shadow: 0 0 14px rgba(255, 106, 19, 0.25);
+        }
+
+        .speed-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-left: auto;
+            min-width: 210px;
+        }
+
+        .speed-label {
+            font-family: 'Caveat', cursive;
+            font-size: 1.35rem;
+            color: var(--ink-brown);
+            white-space: nowrap;
+        }
+
+        .speed-slider {
+            width: 100%;
+            accent-color: #cf5a10;
+        }
+
+        .speed-value {
+            min-width: 66px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            color: var(--ink-brown);
+            text-align: right;
+        }
+
+        /* ---------------------------------
+           New Thought Section Styles
+           --------------------------------- */
+        .thought-box {
+            background: rgba(135, 206, 235, 0.15);
+            border: 2px solid rgba(135, 206, 235, 0.35);
+            border-radius: 22px 14px 20px 16px / 16px 24px 15px 23px;
+            padding: 2.5rem;
+            margin-top: 1rem;
+        }
+
+        .thought-heading-label {
+            display: none;
+        }
+
+        .thought-heading {
+            font-family: 'Caveat', cursive;
+            color: #E67E22;
+            font-size: 5.2rem;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            transform: rotate(-1.5deg);
+            display: inline-block;
+            background: transparent;
+            padding: 0;
+            border-radius: 0;
+            position: relative;
+        }
+
+        .thought-heading::before {
+            content: '[ ';
+            font-family: 'Caveat', cursive;
+            font-size: 5.2rem;
+            color: rgba(230, 126, 34, 0.35);
+        }
+
+        .thought-heading::after {
+            content: ' ]';
+            font-family: 'Caveat', cursive;
+            font-size: 5.2rem;
+            color: rgba(230, 126, 34, 0.35);
+        }
+
+        .sketched-list-box {
+            border: 2px dashed rgba(255, 106, 19, 0.5);
+            border-radius: 12px 25px 15px 20px / 20px 15px 25px 12px;
+            padding: 1.5rem 2rem;
+            margin: 2rem 0;
+            background: rgba(26, 21, 19, 0.3);
+        }
+
+        .sketched-list-box ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .sketched-list-box li {
+            margin-bottom: 0.8rem;
+            position: relative;
+            padding-left: 2rem;
+            font-size: 1.125rem;
+            font-weight: 300;
+            color: rgba(242, 236, 228, 0.9);
+        }
+
+        .sketched-list-box li:last-child {
+            margin-bottom: 0;
+        }
+
+        .sketched-list-box li::before {
+            content: '→';
+            font-family: 'Caveat', cursive;
+            color: var(--accent-orange);
+            position: absolute;
+            left: 0;
+            top: -2px;
+            font-size: 1.6rem;
+            line-height: 1;
+            font-weight: 700;
+        }
+
+        .sketched-list-box strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* ---------------------------------
+           Pink Sticky Note Styles
+           --------------------------------- */
+        .sticky-note {
+            background-color: #fadadd; /* Soft light pink */
+            color: #3f2f24; /* Dark brown ink */
+            font-family: 'Caveat', cursive;
+            font-size: 1.8rem;
+            line-height: 1.35;
+            padding: 2rem 2.5rem;
+            border-radius: 2px 15px 5px 25px / 25px 5px 15px 2px;
+            box-shadow: 5px 8px 15px rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(0, 0, 0, 0.03);
+            transform: rotate(-2deg);
+            margin: 3rem auto 4rem auto;
+            max-width: 90%;
+            position: relative;
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .sticky-note::before {
+            content: "..Note..";
+            display: block;
+            font-family: 'Caveat', cursive;
+            font-size: 1.95rem;
+            font-weight: 700;
+            color: #2b1f18;
+            text-align: center;
+            padding-bottom: 0.8rem;
+            border-bottom: 2px solid rgba(43, 31, 24, 0.3);
+            margin-bottom: 1.2rem;
+            letter-spacing: 2px;
+        }
+
+        .sticky-note:hover {
+            transform: rotate(0deg) scale(1.02);
+            box-shadow: 8px 12px 20px rgba(0, 0, 0, 0.4), inset 0 0 10px rgba(0, 0, 0, 0.03);
+        }
+
+        .next-page-link {
+            align-self: center; /* Centered perfectly */
+            text-decoration: none;
+            font-family: 'Caveat', cursive;
+            font-size: 1.8rem;
+            color: var(--accent-orange);
+            background: transparent;
+            border: 2px solid rgba(255, 106, 19, 0.85);
+            border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+            padding: 0.5rem 2rem;
+            transition: all 0.25s ease;
+            box-shadow: 4px 4px 0 rgba(255, 106, 19, 0.12);
+        }
+
+        .next-page-link:hover {
+            color: #fff;
+            background: rgba(255, 106, 19, 0.25);
+            box-shadow: 0 0 14px rgba(255, 106, 19, 0.26);
+            transform: rotate(1deg) scale(1.05);
+        }
+
+        /* ---------------------------------
+           Responsive Adjustments
+           --------------------------------- */
+        @media (max-width: 900px) {
+            .note-side {
+                right: 0;
+                top: -50px;
+                left: 20px;
+                transform: rotate(-3deg);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-section, .body-section {
+                transform: none;
+                align-self: flex-start;
+            }
+            .sketchy-box {
+                padding: 2rem;
+            }
+            .container {
+                gap: 5rem;
+                padding-top: 15vh;
+            }
+
+            .sim-canvas,
+            .graph-canvas {
+                height: 220px;
+            }
+
+            .speed-wrap {
+                width: 100%;
+                margin-left: 0;
+            }
+            
+            .panel-meta-group {
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 0.25rem;
+            }
+
+            .thought-box {
+                padding: 1.5rem;
+            }
+
+            .sticky-note {
+                font-size: 1.5rem;
+                padding: 1.5rem;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Premium Texture Overlay -->
+    <div class="noise-overlay"></div>
+
+    <!-- Ventriloc Style Smooth Data Curves -->
+    <svg class="data-curves" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+        <path d="M-100 200 C 400 100, 800 600, 1600 500" fill="none" stroke="rgba(255, 255, 255, 0.03)" stroke-width="2" />
+        <path d="M-50 400 C 300 800, 700 900, 1500 750" fill="none" stroke="rgba(255, 106, 19, 0.05)" stroke-width="1.5" />
+        <path d="M100 -100 C 500 300, 900 800, 1400 1000" fill="none" stroke="rgba(255, 106, 19, 0.03)" stroke-width="3" />
+    </svg>
+
+    <div class="container">
+        
+        <!-- Header Section -->
+        <header class="header-section">
+            <span class="handwritten note-top">Hypothesis 01</span>
+            <h1>
+                The 1D Particle <br>
+                <span class="highlight-wrapper">
+                    Race
+                    <!-- Sketchy SVG Underline -->
+                    <svg class="sketch-underline" viewBox="0 0 180 20" preserveAspectRatio="none">
+                        <path d="M5,15 Q90,5 175,12" fill="none" stroke="var(--accent-orange)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M10,18 Q85,8 170,16" fill="none" stroke="var(--accent-orange)" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+                    </svg>
+                </span>
+            </h1>
+        </header>
+
+        <!-- Body Section -->
+        <main class="body-section">
+            
+            <div class="sketchy-box">
+                <span class="handwritten note-side">What happens when t → ∞ ?</span>
+                <p>
+                    I think the 3D or general formulation can only be done when we truly understand why it works fundamentally. So, let's look at two particles that can only move in a 1D way: straight forward or straight backward. They both have their own axis, meaning they both stand on the ground side-by-side. 
+                    <br><br>
+                    Imagine the distance between their starting points approaches zero—they are essentially starting from the exact same spot. Now, our goal is simply to see: if both have a 50/50 probability of moving one step forward or backward in 1 unit of time, what will happen when time (t) approaches infinity? Will they stay close together near the starting point? Will they just wobble back and forth forever? Or will they diverge? Let's see what happens...
+                </p>
+            </div>
+
+            <!-- Experiment Section -->
+            <section class="experiment-section" aria-label="Experiment simulation panels">
+                <div class="paper-grid">
+                    
+                    <!-- Panel 1: Vertical Simulation -->
+                    <article class="paper-panel">
+                        <div class="panel-head">
+                            <h2 class="panel-title">Experiment: Vertical Motion</h2>
+                            <span class="panel-meta" id="zoomReadout">1 Grid Block = 2 Units</span>
+                        </div>
+                        <canvas id="simCanvas" class="sim-canvas" width="740" height="250" aria-label="Particle simulation"></canvas>
+                        <div class="panel-caption">Detail: Two independent particles. Each has a 50/50 chance to step +1 or -1 vertically per tick. Distance starts at zero.</div>
+                    </article>
+
+                    <!-- Panel 2: Distance Graph & Moving Average -->
+                    <article class="paper-panel">
+                        <div class="panel-head">
+                            <h2 class="panel-title">Distance Graph |A - B| vs Steps</h2>
+                            <div class="panel-meta-group">
+                                <span class="panel-meta" id="averageReadout">Current Average: 0.00</span>
+                                <span class="panel-meta" id="stepReadout">Step: 0</span>
+                            </div>
+                        </div>
+                        <canvas id="graphCanvas" class="graph-canvas" width="740" height="250" aria-label="Distance over time graph"></canvas>
+                        <div class="panel-caption">Detail: Tracking the absolute gap |A - B|. The thick line is the cumulative moving average revealing the hidden macro-trend.</div>
+                    </article>
+
+                    <!-- Panel 3: Velocity Graph -->
+                    <article class="paper-panel">
+                        <div class="panel-head">
+                            <h2 class="panel-title">Rate of Change (Δ Moving Average)</h2>
+                            <div class="panel-meta-group">
+                                <span class="panel-meta" id="velocityReadout">Δ: 0.000</span>
+                                <span class="panel-meta" id="cumulativeReadout">
+                                    <span style="color: #0d9488;">Growth: 50.0%</span> | <span style="color: #dc2626;">Shrink: 50.0%</span>
+                                </span>
+                            </div>
+                        </div>
+                        <canvas id="velocityCanvas" class="graph-canvas" width="740" height="250" aria-label="Velocity over time graph"></canvas>
+                        <div class="panel-caption">Detail: The velocity of the moving average. Positive delta means the spread is accelerating; negative means it's collapsing.</div>
+                    </article>
+                    
+                    <!-- Panel 4: Dominance Ratio Graph -->
+                    <article class="paper-panel">
+                        <div class="panel-head">
+                            <h2 class="panel-title">Overall State of Growth vs. Shrink (Dominance Ratio)</h2>
+                            <div class="panel-meta-group">
+                                <span class="panel-meta" id="dominanceReadout">
+                                    <span style="color: #0d9488;">Avg Growth Area: 50.0%</span> | <span style="color: #dc2626;">Avg Shrink Area: 50.0%</span>
+                                </span>
+                            </div>
+                        </div>
+                        <canvas id="dominanceCanvas" class="graph-canvas" width="740" height="250" aria-label="Dominance ratio over time graph"></canvas>
+                        <div class="panel-caption">Detail: A 100% stacked history comparing total time spent expanding (Green) vs. collapsing (Red). Watch the green take over.</div>
+                    </article>
+
+                    <!-- Control Panel -->
+                    <article class="paper-panel">
+                        <div class="panel-head">
+                            <h2 class="panel-title">Control Panel</h2>
+                            <span class="panel-meta" id="distanceReadout">|A - B| = 0</span>
+                        </div>
+                        <div class="control-panel">
+                            <button id="playPauseBtn" class="sketch-control" type="button">Play</button>
+                            <button id="stepBtn" class="sketch-control" type="button">Take 1 Step</button>
+                            <button id="resetBtn" class="sketch-control" type="button">Reset</button>
+                            <div class="speed-wrap">
+                                <label for="speedSlider" class="speed-label">Simulation Speed</label>
+                                <input id="speedSlider" class="speed-slider" type="range" min="1" max="60" value="15" step="1">
+                                <span id="speedValue" class="speed-value">15 step/s</span>
+                            </div>
+                        </div>
+                        <div class="panel-caption">Detail: Adjust the flow of time to watch the 'Law of Large Numbers' emerge.</div>
+                    </article>
+
+                </div>
+            </section>
+
+            <!-- Expanded Thought Section -->
+            <section class="thought-box" aria-label="Thought">
+                <h2 class="thought-heading">wow what?!</h2>
+                <p>
+                    Seeing this run live... I just have to say wow. I mean, wow. Why is this actually working? Even though the probability of stepping up or down is perfectly 50/50, why is the average distance between them always growing? Looking at our Rate of Change graph, the 'Cumulative Growth' area is stubbornly beating the 'Shrink' area. The average is constantly fighting to diverge.
+                    <br><br>
+                    But looking at the raw distance graph, we see all this violent wobbling. We watch the graph literally crash down and 'kiss the ground' (zero distance) over and over again, yet over the long run, the distance just keeps increasing. Why? This is so odd! Let’s look at what the raw combinatorics actually say. For any given step, these two particles only have 4 possible combinations:
+                </p>
+
+                <div class="sketched-list-box">
+                    <ul>
+                        <li><strong>A moves Up, B moves Up</strong> (Distance stays the same).</li>
+                        <li><strong>A moves Down, B moves Down</strong> (Distance stays the same).</li>
+                        <li><strong>A moves Up, B moves Down</strong> (They move further apart).</li>
+                        <li><strong>A moves Down, B moves Up</strong> (They move closer together).</li>
+                    </ul>
+                </div>
+
+                <p>
+                    Look at those odds. There is a 50% probability of doing absolutely nothing. There is a 25% probability of expanding, and a 25% probability of shrinking. Based on this, they shouldn't move apart at all, right?! The probabilities perfectly cancel out. The chance of staying still is massive, and the chance of growing is perfectly neutralized by the chance of shrinking. So what is the invisible hand pushing them apart?
+                </p>
+            </section>
+
+            <!-- The Pink Sticky Note Diary Entry -->
+            <div class="sticky-note">
+                Believe me, it just made me mad to search for why. Why is this happening?! This was the first experiment I ever did on my computer. Before this, I used to just join wires and play with motors, batteries, and LEDs. This made me understand that I can do great—even greater—experiments right here on my computer. I have simulated this hundreds of times and my results were always the same. I hope your simulation results are also saying what mine said. Tell me, is this not a fantastic thing to think about?!
+            </div>
+
+            <!-- Next Page Button -->
+            <a class="next-page-link" href="index.html">Next?!</a>
+
+        </main>
+
+    </div>
+
+    <script>
+        const simCanvas = document.getElementById('simCanvas');
+        const graphCanvas = document.getElementById('graphCanvas');
+        const velocityCanvas = document.getElementById('velocityCanvas');
+        const dominanceCanvas = document.getElementById('dominanceCanvas');
+        
+        const simCtx = simCanvas.getContext('2d');
+        const graphCtx = graphCanvas.getContext('2d');
+        const velocityCtx = velocityCanvas.getContext('2d');
+        const dominanceCtx = dominanceCanvas.getContext('2d');
+
+        const zoomReadout = document.getElementById('zoomReadout');
+        const stepReadout = document.getElementById('stepReadout');
+        const averageReadout = document.getElementById('averageReadout');
+        const distanceReadout = document.getElementById('distanceReadout');
+        const velocityReadout = document.getElementById('velocityReadout');
+        const cumulativeReadout = document.getElementById('cumulativeReadout');
+        const dominanceReadout = document.getElementById('dominanceReadout');
+        
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const stepBtn = document.getElementById('stepBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // Physics & Graph State
+        let particleA = 0;
+        let particleB = 0;
+        let visualA = 0; // For smooth lerping
+        let visualB = 0; // For smooth lerping
+        let stepCount = 0;
+        let distHistory = [0];
+        let avgHistory = [0];
+        let velHistory = [0];
+        let dominanceHistory = [50.0];
+        let sumDist = 0;
+        let sumAbsDelta = 0;
+        let totalPositiveDelta = 0;
+        let totalNegativeDelta = 0;
+        let sumDominance = 50.0;
+        let maxGraphDist = 1;
+
+        // Loop State
+        let isPlaying = false;
+        let stepsPerSecond = Number(speedSlider.value);
+        let accumulator = 0;
+        let lastTime = null;
+
+        // Throttle State for Average UI Update
+        let lastAvgTime = 0;
+        let lastAvgValue = 0;
+
+        function randStep() {
+            return Math.random() < 0.5 ? -1 : 1;
+        }
+
+        function performStep() {
+            particleA += randStep();
+            particleB += randStep();
+            stepCount += 1;
+            
+            let dist = Math.abs(particleA - particleB);
+            sumDist += dist;
+            let currentAvg = sumDist / stepCount;
+
+            let prevAvg = avgHistory[avgHistory.length - 1];
+            let deltaMA = currentAvg - prevAvg;
+            sumAbsDelta += Math.abs(deltaMA);
+
+            if (deltaMA > 0) {
+                totalPositiveDelta += deltaMA;
+            } else if (deltaMA < 0) {
+                totalNegativeDelta += Math.abs(deltaMA);
+            }
+
+            let totalArea = totalPositiveDelta + totalNegativeDelta;
+            let currentGrowthPct = totalArea > 0 ? (totalPositiveDelta / totalArea) * 100 : 50.0;
+            
+            distHistory.push(dist);
+            avgHistory.push(currentAvg);
+            velHistory.push(deltaMA);
+            dominanceHistory.push(currentGrowthPct);
+            sumDominance += currentGrowthPct;
+
+            if (dist > maxGraphDist) maxGraphDist = dist;
+            if (currentAvg > maxGraphDist) maxGraphDist = currentAvg;
+
+            updateStaticReadouts();
+        }
+
+        function resetSimulation() {
+            particleA = 0;
+            particleB = 0;
+            visualA = 0;
+            visualB = 0;
+            stepCount = 0;
+            distHistory = [0];
+            avgHistory = [0];
+            velHistory = [0];
+            dominanceHistory = [50.0];
+            sumDist = 0;
+            sumAbsDelta = 0;
+            totalPositiveDelta = 0;
+            totalNegativeDelta = 0;
+            sumDominance = 50.0;
+            maxGraphDist = 1;
+            accumulator = 0;
+            isPlaying = false;
+            
+            playPauseBtn.textContent = 'Play';
+            averageReadout.style.color = 'var(--ink-brown)';
+            averageReadout.textContent = `Current Average: 0.00`;
+            velocityReadout.textContent = `Δ: 0.000`;
+            cumulativeReadout.innerHTML = `<span style="color: #0d9488;">Growth: 50.0%</span> | <span style="color: #dc2626;">Shrink: 50.0%</span>`;
+            dominanceReadout.innerHTML = `<span style="color: #0d9488;">Avg Growth Area: 50.0%</span> | <span style="color: #dc2626;">Avg Shrink Area: 50.0%</span>`;
+            
+            lastAvgValue = 0;
+            lastAvgTime = performance.now();
+            
+            updateStaticReadouts();
+        }
+
+        // Updates readouts that can trigger every frame without lag
+        function updateStaticReadouts() {
+            distanceReadout.textContent = `|A - B| = ${Math.abs(particleA - particleB)}`;
+            stepReadout.textContent = `Step: ${stepCount}`;
+            if (velHistory.length > 0) {
+                let lastVel = velHistory[velHistory.length - 1];
+                let sign = lastVel > 0 ? '+' : '';
+                velocityReadout.textContent = `Δ: ${sign}${lastVel.toFixed(4)}`;
+            }
+        }
+
+        function resizeCanvasForDPR(canvas, ctx) {
+            const ratio = window.devicePixelRatio || 1;
+            const cssWidth = canvas.clientWidth;
+            const cssHeight = canvas.clientHeight;
+            const neededWidth = Math.round(cssWidth * ratio);
+            const neededHeight = Math.round(cssHeight * ratio);
+            if (canvas.width !== neededWidth || canvas.height !== neededHeight) {
+                canvas.width = neededWidth;
+                canvas.height = neededHeight;
+            }
+            ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+            return { width: cssWidth, height: cssHeight };
+        }
+
+        // ----------------------------------------------------
+        // PANEL 1: VERTICAL SIMULATION RENDERER (Smooth & Lerping)
+        // ----------------------------------------------------
+        function drawSimulation() {
+            const { width: w, height: h } = resizeCanvasForDPR(simCanvas, simCtx);
+            simCtx.clearRect(0, 0, w, h);
+
+            const cx = w / 2;
+            const cy = h / 2;
+            const padding = 25;
+
+            // Use visualA and visualB for smooth camera scaling
+            const maxAbsY = Math.max(Math.abs(visualA), Math.abs(visualB), 5);
+            
+            // Fractal Grid Scaling Engine
+            let intervals = [];
+            let baseLog = Math.floor(Math.log10(maxAbsY || 1)) - 1;
+            // Generate scale intervals crossing powers of 10
+            for(let e = baseLog; e <= baseLog + 3; e++) {
+                let p = Math.pow(10, e);
+                intervals.push(p, p*2, p*5);
+            }
+            intervals.sort((a,b) => a - b);
+            
+            // Base scale based on target visual boundary
+            const scale = (cy - padding) / (maxAbsY + 1);
+
+            // Determine appropriate readout scale dynamically
+            let labelInterval = intervals.find(int => int * scale >= 35) || intervals[0];
+            let labelStr = labelInterval >= 1 ? Math.round(labelInterval) : (Math.round(labelInterval * 100) / 100).toString();
+            zoomReadout.textContent = `1 Grid Block = ${labelStr} Units`;
+
+            simCtx.lineWidth = 1;
+            let drawnYs = new Set();
+            
+            // Draw grid lines starting from the widest intervals down to the tightest, fading tightly packed ones
+            for (let i = intervals.length - 1; i >= 0; i--) {
+                let interval = intervals[i];
+                let pixelDist = interval * scale;
+                if (pixelDist < 8) continue; // Too dense to draw
+                
+                // Alpha fade calculation (gracefully fades in as lines separate from 8px to 38px)
+                let alpha = Math.min(0.15, (pixelDist - 8) / 30 * 0.15); 
+                if (alpha <= 0.01) continue;
+                
+                simCtx.strokeStyle = `rgba(91, 63, 44, ${alpha.toFixed(3)})`;
+                simCtx.beginPath();
+                
+                let gridMax = Math.ceil(maxAbsY / interval) * interval + interval;
+                for (let y = 0; y <= gridMax; y += interval) {
+                    let key = Math.round(y * 1000) / 1000;
+                    if(drawnYs.has(key)) continue; // Prevent overdrawing
+                    drawnYs.add(key);
+
+                    let sy1 = cy - y * scale; 
+                    let sy2 = cy + y * scale; 
+                    
+                    simCtx.moveTo(0, sy1); simCtx.lineTo(w, sy1);
+                    if (y !== 0) {
+                        simCtx.moveTo(0, sy2); simCtx.lineTo(w, sy2);
+                    }
+                }
+                simCtx.stroke();
+            }
+
+            // Central X-Axis
+            simCtx.strokeStyle = 'rgba(91, 63, 44, 0.8)';
+            simCtx.lineWidth = 2.5;
+            simCtx.beginPath();
+            simCtx.moveTo(10, cy);
+            simCtx.lineTo(w - 10, cy);
+            simCtx.stroke();
+
+            const xA = cx - 30; 
+            const xB = cx + 30; 
+            
+            const visualYA = cy - (visualA * scale);
+            const visualYB = cy - (visualB * scale);
+
+            simCtx.strokeStyle = 'rgba(91, 63, 44, 0.55)';
+            simCtx.setLineDash([4, 5]);
+            simCtx.lineWidth = 1.5;
+            simCtx.beginPath();
+            simCtx.moveTo(xA, cy); simCtx.lineTo(xA, visualYA);
+            simCtx.moveTo(xB, cy); simCtx.lineTo(xB, visualYB);
+            simCtx.stroke();
+            simCtx.setLineDash([]);
+
+            simCtx.fillStyle = '#2c6ed5';
+            simCtx.beginPath();
+            simCtx.arc(xA, visualYA, 11, 0, Math.PI * 2);
+            simCtx.fill();
+
+            simCtx.fillStyle = '#d84f48';
+            simCtx.beginPath();
+            simCtx.arc(xB, visualYB, 11, 0, Math.PI * 2);
+            simCtx.fill();
+
+            simCtx.fillStyle = 'rgba(91, 63, 44, 0.95)';
+            simCtx.font = "700 17px Caveat";
+            simCtx.textAlign = "center";
+            simCtx.fillText('A', xA, visualYA < cy ? visualYA + 26 : visualYA - 16);
+            simCtx.fillText('B', xB, visualYB < cy ? visualYB + 26 : visualYB - 16);
+        }
+
+        // ----------------------------------------------------
+        // PANEL 2: FULL COMPRESSED GRAPH RENDERER
+        // ----------------------------------------------------
+        function drawGraph() {
+            const { width: w, height: h } = resizeCanvasForDPR(graphCanvas, graphCtx);
+            graphCtx.clearRect(0, 0, w, h);
+
+            const padL = 46, padR = 16, padT = 20, padB = 34;
+            const graphW = Math.max(1, w - padL - padR);
+            const graphH = Math.max(1, h - padT - padB);
+            const n = distHistory.length;
+
+            graphCtx.strokeStyle = 'rgba(91, 63, 44, 0.75)';
+            graphCtx.lineWidth = 1.7;
+            graphCtx.beginPath();
+            graphCtx.moveTo(padL, padT - 10);
+            graphCtx.lineTo(padL, h - padB);
+            graphCtx.lineTo(w - padR + 10, h - padB);
+            graphCtx.stroke();
+
+            graphCtx.fillStyle = 'rgba(91, 63, 44, 0.92)';
+            graphCtx.font = '600 12px Inter';
+            graphCtx.fillText('0', padL - 14, h - padB + 14);
+            graphCtx.fillText(Math.ceil(maxGraphDist).toString(), padL - 32, padT + 4);
+            graphCtx.fillText('Time (Steps)', w - padR - 82, h - 8);
+            
+            graphCtx.save();
+            graphCtx.translate(14, padT + 70);
+            graphCtx.rotate(-Math.PI / 2);
+            graphCtx.fillText('Distance |A - B|', 0, 0);
+            graphCtx.restore();
+
+            if (n < 2) return;
+
+            const stepSize = Math.max(1, Math.ceil(n / (graphW * 2)));
+
+            // 1) Draw Raw Distance Line
+            graphCtx.strokeStyle = 'rgba(255, 106, 19, 0.65)';
+            graphCtx.lineWidth = 1.5;
+            graphCtx.lineJoin = 'round';
+            graphCtx.beginPath();
+            
+            for (let i = 0; i < n; i += stepSize) {
+                let tRatio = i / (n - 1);
+                let x = padL + tRatio * graphW;
+                let y = h - padB - (distHistory[i] / maxGraphDist) * graphH;
+                
+                let jitterX = Math.sin(i * 1.7) * 0.5;
+                let jitterY = Math.cos(i * 1.1) * 0.5;
+
+                if (i === 0) graphCtx.moveTo(x + jitterX, y + jitterY);
+                else graphCtx.lineTo(x + jitterX, y + jitterY);
+            }
+            if ((n - 1) % stepSize !== 0) {
+                let x = padL + graphW;
+                let y = h - padB - (distHistory[n - 1] / maxGraphDist) * graphH;
+                graphCtx.lineTo(x, y);
+            }
+            graphCtx.stroke();
+
+            // 2) Draw Smooth Moving Average Line
+            graphCtx.strokeStyle = '#334155';
+            graphCtx.lineWidth = 3;
+            graphCtx.lineJoin = 'round';
+            graphCtx.beginPath();
+
+            for (let i = 0; i < n; i += stepSize) {
+                let tRatio = i / (n - 1);
+                let x = padL + tRatio * graphW;
+                let y = h - padB - (avgHistory[i] / maxGraphDist) * graphH;
+
+                if (i === 0) graphCtx.moveTo(x, y);
+                else graphCtx.lineTo(x, y);
+            }
+            if ((n - 1) % stepSize !== 0) {
+                let x = padL + graphW;
+                let y = h - padB - (avgHistory[n - 1] / maxGraphDist) * graphH;
+                graphCtx.lineTo(x, y);
+            }
+            graphCtx.stroke();
+        }
+
+        // ----------------------------------------------------
+        // PANEL 3: FULL COMPRESSED VELOCITY GRAPH RENDERER
+        // ----------------------------------------------------
+        function drawVelocity() {
+            const { width: w, height: h } = resizeCanvasForDPR(velocityCanvas, velocityCtx);
+            velocityCtx.clearRect(0, 0, w, h);
+
+            const padL = 46, padR = 16, padT = 20, padB = 34;
+            const graphW = Math.max(1, w - padL - padR);
+            const graphH = Math.max(1, h - padT - padB);
+            const centerY = padT + graphH / 2;
+            const n = velHistory.length;
+
+            let meanAbsDelta = stepCount > 0 ? sumAbsDelta / stepCount : 0.0001;
+            let bound = Math.max(meanAbsDelta * 3.5, 0.001); 
+
+            velocityCtx.strokeStyle = 'rgba(91, 63, 44, 0.75)';
+            velocityCtx.lineWidth = 1.7;
+            velocityCtx.beginPath();
+            velocityCtx.moveTo(padL, padT - 10);
+            velocityCtx.lineTo(padL, h - padB);
+            velocityCtx.lineTo(w - padR + 10, h - padB);
+            velocityCtx.stroke();
+
+            velocityCtx.strokeStyle = 'rgba(91, 63, 44, 0.4)';
+            velocityCtx.setLineDash([4, 4]);
+            velocityCtx.beginPath();
+            velocityCtx.moveTo(padL, centerY);
+            velocityCtx.lineTo(w - padR + 10, centerY);
+            velocityCtx.stroke();
+            velocityCtx.setLineDash([]);
+
+            velocityCtx.fillStyle = 'rgba(91, 63, 44, 0.92)';
+            velocityCtx.font = '600 12px Inter';
+            
+            velocityCtx.textAlign = 'right';
+            velocityCtx.fillText('0', padL - 6, centerY + 4);
+            velocityCtx.fillText('+' + bound.toFixed(3), padL - 6, padT + 4);
+            velocityCtx.fillText('-' + bound.toFixed(3), padL - 6, h - padB + 4);
+            
+            velocityCtx.textAlign = 'left';
+            velocityCtx.fillText('Time (Steps)', w - padR - 82, h - 8);
+            
+            velocityCtx.save();
+            velocityCtx.translate(14, centerY + 50);
+            velocityCtx.rotate(-Math.PI / 2);
+            velocityCtx.fillText('True Δ MA', 0, 0);
+            velocityCtx.restore();
+
+            if (n < 2) return;
+
+            const stepSize = Math.max(1, Math.ceil(n / (graphW * 2)));
+
+            const gradient = velocityCtx.createLinearGradient(0, padT, 0, h - padB);
+            gradient.addColorStop(0, '#ff6a13'); 
+            gradient.addColorStop(0.499, '#ff6a13'); 
+            gradient.addColorStop(0.501, '#7f1d1d'); 
+            gradient.addColorStop(1, '#7f1d1d');
+
+            velocityCtx.strokeStyle = gradient; 
+            velocityCtx.lineWidth = 2;
+            velocityCtx.lineJoin = 'round';
+            velocityCtx.beginPath();
+
+            for (let i = 0; i < n; i += stepSize) {
+                let tRatio = i / (n - 1);
+                let x = padL + tRatio * graphW;
+                
+                let rawVal = velHistory[i];
+                let clippedVal = Math.max(-bound, Math.min(bound, rawVal));
+                
+                let y = centerY - (clippedVal / bound) * (graphH / 2);
+                
+                let jitterX = Math.sin(i * 2.1) * 0.4;
+                let jitterY = Math.cos(i * 1.5) * 0.4;
+
+                if (i === 0) velocityCtx.moveTo(x + jitterX, y + jitterY);
+                else velocityCtx.lineTo(x + jitterX, y + jitterY);
+            }
+            if ((n - 1) % stepSize !== 0) {
+                let x = padL + graphW;
+                let rawVal = velHistory[n - 1];
+                let clippedVal = Math.max(-bound, Math.min(bound, rawVal));
+                let y = centerY - (clippedVal / bound) * (graphH / 2);
+                velocityCtx.lineTo(x, y);
+            }
+            velocityCtx.stroke();
+        }
+
+        // ----------------------------------------------------
+        // PANEL 4: DOMINANCE RATIO GRAPH RENDERER
+        // ----------------------------------------------------
+        function drawDominance() {
+            const { width: w, height: h } = resizeCanvasForDPR(dominanceCanvas, dominanceCtx);
+            dominanceCtx.clearRect(0, 0, w, h);
+
+            const padL = 46, padR = 16, padT = 20, padB = 34;
+            const graphW = Math.max(1, w - padL - padR);
+            const graphH = Math.max(1, h - padT - padB);
+            const centerY = padT + graphH / 2; // Exact middle mapping to 50%
+            const n = dominanceHistory.length;
+
+            if (n < 2) return;
+
+            const stepSize = Math.max(1, Math.ceil(n / (graphW * 2)));
+
+            // Construct points deterministically with consistent jitter
+            const points = [];
+            for (let i = 0; i < n; i += stepSize) {
+                let tRatio = i / (n - 1);
+                let x = padL + tRatio * graphW;
+                let val = dominanceHistory[i];
+                let y = h - padB - (val / 100) * graphH;
+                
+                // Remove X jitter on the exact edges to ensure colors fill flush against the borders
+                let jitterX = (i === 0 || i + stepSize >= n) ? 0 : Math.sin(i * 1.8) * 0.4;
+                let jitterY = Math.cos(i * 1.3) * 0.4;
+                
+                points.push({ x: x + jitterX, y: y + jitterY });
+            }
+            if ((n - 1) % stepSize !== 0) {
+                let x = padL + graphW;
+                let val = dominanceHistory[n - 1];
+                let y = h - padB - (val / 100) * graphH;
+                points.push({ x, y });
+            }
+
+            // 1) AREA FILL: SHRINK (Top bounding box down to the dividing line)
+            dominanceCtx.fillStyle = 'rgba(220, 38, 38, 0.18)'; // Semi-transparent Reddish-brown
+            dominanceCtx.beginPath();
+            dominanceCtx.moveTo(points[0].x, padT); // Top-Left
+            points.forEach(pt => dominanceCtx.lineTo(pt.x, pt.y)); // Follow dividing line
+            dominanceCtx.lineTo(points[points.length - 1].x, padT); // Top-Right
+            dominanceCtx.closePath();
+            dominanceCtx.fill();
+
+            // 2) AREA FILL: GROWTH (Bottom bounding box up to the dividing line)
+            dominanceCtx.fillStyle = 'rgba(13, 148, 136, 0.2)'; // Semi-transparent Greenish-blue
+            dominanceCtx.beginPath();
+            dominanceCtx.moveTo(points[0].x, h - padB); // Bottom-Left
+            points.forEach(pt => dominanceCtx.lineTo(pt.x, pt.y)); // Follow dividing line
+            dominanceCtx.lineTo(points[points.length - 1].x, h - padB); // Bottom-Right
+            dominanceCtx.closePath();
+            dominanceCtx.fill();
+
+            // 3) DIVIDING STROKE LINE (Dynamically colored based on threshold)
+            const strokeGrad = dominanceCtx.createLinearGradient(0, padT, 0, h - padB);
+            strokeGrad.addColorStop(0, '#0d9488'); // Greenish-blue (Above 50%)
+            strokeGrad.addColorStop(0.499, '#0d9488'); 
+            strokeGrad.addColorStop(0.501, '#dc2626'); // Reddish-brown (Below 50%)
+            strokeGrad.addColorStop(1, '#dc2626');
+
+            dominanceCtx.strokeStyle = strokeGrad; 
+            dominanceCtx.lineWidth = 2.5;
+            dominanceCtx.lineJoin = 'round';
+            dominanceCtx.beginPath();
+            points.forEach((pt, idx) => {
+                if (idx === 0) dominanceCtx.moveTo(pt.x, pt.y);
+                else dominanceCtx.lineTo(pt.x, pt.y);
+            });
+            dominanceCtx.stroke();
+
+            // 4) CENTER EQUILIBRIUM LINE (50%) - Placed over fills to act as a visual anchor
+            dominanceCtx.strokeStyle = 'rgba(91, 63, 44, 0.65)'; // Dark Ventriloc-style ink
+            dominanceCtx.setLineDash([5, 5]);
+            dominanceCtx.lineWidth = 1.5;
+            dominanceCtx.beginPath();
+            dominanceCtx.moveTo(padL, centerY);
+            dominanceCtx.lineTo(padL + graphW, centerY);
+            dominanceCtx.stroke();
+            dominanceCtx.setLineDash([]);
+
+            // 5) DRAW GRAPH AXES OVERLAY
+            dominanceCtx.strokeStyle = 'rgba(91, 63, 44, 0.85)';
+            dominanceCtx.lineWidth = 1.7;
+            dominanceCtx.beginPath();
+            dominanceCtx.moveTo(padL, padT - 10);
+            dominanceCtx.lineTo(padL, h - padB);
+            dominanceCtx.lineTo(w - padR + 10, h - padB);
+            dominanceCtx.stroke();
+
+            // 6) AXIS TEXT
+            dominanceCtx.fillStyle = 'rgba(91, 63, 44, 0.95)';
+            dominanceCtx.font = '700 12px Inter';
+            dominanceCtx.textAlign = 'right';
+            dominanceCtx.fillText('100%', padL - 6, padT + 4);
+            dominanceCtx.fillText('50%', padL - 6, centerY + 4);
+            dominanceCtx.fillText('0%', padL - 6, h - padB + 4);
+            
+            dominanceCtx.textAlign = 'left';
+            dominanceCtx.fillText('Time (Steps)', w - padR - 82, h - 8);
+            
+            dominanceCtx.save();
+            dominanceCtx.translate(14, centerY + 65);
+            dominanceCtx.rotate(-Math.PI / 2);
+            dominanceCtx.fillText('Growth Ratio (%)', 0, 0);
+            dominanceCtx.restore();
+        }
+
+        // ----------------------------------------------------
+        // ANIMATION LOOP & THROTTLING
+        // ----------------------------------------------------
+        function frame(now) {
+            if (lastTime === null) {
+                lastTime = now;
+                lastAvgTime = now;
+            }
+            
+            // Cap delta time to prevent massive lag spikes when tabbing out
+            const dt = Math.min((now - lastTime) / 1000, 0.1);
+            lastTime = now;
+
+            if (isPlaying) {
+                accumulator += dt * stepsPerSecond;
+                while (accumulator >= 1) {
+                    performStep();
+                    accumulator -= 1;
+                }
+            }
+
+            // Lerp visual positions towards true logical physics positions
+            // Time-based lerp ensures frame-rate independent smoothness
+            let lerpFactor = 1 - Math.exp(-dt * 20); 
+            visualA += (particleA - visualA) * lerpFactor;
+            visualB += (particleB - visualB) * lerpFactor;
+
+            // --- UI PERFORMANCE THROTTLE: Update Live Average every 3 seconds ---
+            if (now - lastAvgTime > 3000 && stepCount > 0) {
+                let currentAvg = avgHistory[avgHistory.length - 1];
+                averageReadout.textContent = `Current Average: ${currentAvg.toFixed(2)}`;
+                
+                // Color Code Logic
+                if (currentAvg > lastAvgValue) {
+                    averageReadout.style.color = '#0d9488';
+                    averageReadout.style.background = 'rgba(13, 148, 136, 0.1)';
+                } else if (currentAvg < lastAvgValue) {
+                    averageReadout.style.color = '#dc2626';
+                    averageReadout.style.background = 'rgba(220, 38, 38, 0.1)';
+                }
+
+                lastAvgValue = currentAvg;
+                lastAvgTime = now;
+
+                let totalArea = totalPositiveDelta + totalNegativeDelta;
+                let growthPct = totalArea > 0 ? (totalPositiveDelta / totalArea) * 100 : 50.0;
+                let shrinkPct = totalArea > 0 ? (totalNegativeDelta / totalArea) * 100 : 50.0;
+                cumulativeReadout.innerHTML = `<span style="color: #0d9488;">Growth: ${growthPct.toFixed(1)}%</span> | <span style="color: #dc2626;">Shrink: ${shrinkPct.toFixed(1)}%</span>`;
+
+                let avgDomGrowth = sumDominance / dominanceHistory.length;
+                let avgDomShrink = 100 - avgDomGrowth;
+                dominanceReadout.innerHTML = `<span style="color: #0d9488;">Avg Growth Area: ${avgDomGrowth.toFixed(1)}%</span> | <span style="color: #dc2626;">Avg Shrink Area: ${avgDomShrink.toFixed(1)}%</span>`;
+            }
+
+            drawSimulation();
+            drawGraph();
+            drawVelocity();
+            drawDominance();
+            requestAnimationFrame(frame);
+        }
+
+        // ----------------------------------------------------
+        // EVENT LISTENERS
+        // ----------------------------------------------------
+        playPauseBtn.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            playPauseBtn.textContent = isPlaying ? 'Pause' : 'Play';
+        });
+
+        stepBtn.addEventListener('click', () => {
+            performStep();
+            
+            // Force average text update to trigger immediately on manual clicks
+            let currentAvg = avgHistory[avgHistory.length - 1];
+            averageReadout.textContent = `Current Average: ${currentAvg.toFixed(2)}`;
+            if(currentAvg > lastAvgValue) averageReadout.style.color = '#0d9488';
+            else if(currentAvg < lastAvgValue) averageReadout.style.color = '#dc2626';
+            lastAvgValue = currentAvg;
+
+            let totalArea = totalPositiveDelta + totalNegativeDelta;
+            let growthPct = totalArea > 0 ? (totalPositiveDelta / totalArea) * 100 : 50.0;
+            let shrinkPct = totalArea > 0 ? (totalNegativeDelta / totalArea) * 100 : 50.0;
+            cumulativeReadout.innerHTML = `<span style="color: #0d9488;">Growth: ${growthPct.toFixed(1)}%</span> | <span style="color: #dc2626;">Shrink: ${shrinkPct.toFixed(1)}%</span>`;
+
+            let avgDomGrowth = sumDominance / dominanceHistory.length;
+            let avgDomShrink = 100 - avgDomGrowth;
+            dominanceReadout.innerHTML = `<span style="color: #0d9488;">Avg Growth Area: ${avgDomGrowth.toFixed(1)}%</span> | <span style="color: #dc2626;">Avg Shrink Area: ${avgDomShrink.toFixed(1)}%</span>`;
+
+            drawSimulation();
+            drawGraph();
+            drawVelocity();
+            drawDominance();
+        });
+
+        resetBtn.addEventListener('click', () => {
+            resetSimulation();
+            drawSimulation();
+            drawGraph();
+            drawVelocity();
+            drawDominance();
+        });
+
+        speedSlider.addEventListener('input', (event) => {
+            stepsPerSecond = Number(event.target.value);
+            speedValue.textContent = `${stepsPerSecond} step/s`;
+        });
+
+        window.addEventListener('resize', () => {
+            drawSimulation();
+            drawGraph();
+            drawVelocity();
+            drawDominance();
+        });
+
+        // Initialize Call
+        updateStaticReadouts();
+        drawSimulation();
+        drawGraph();
+        drawVelocity();
+        drawDominance();
+        requestAnimationFrame(frame);
+
+    </script>
+</body>
+</html>
