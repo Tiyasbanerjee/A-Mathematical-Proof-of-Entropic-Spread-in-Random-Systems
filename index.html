@@ -405,23 +405,32 @@
            --------------------------------- */
         .profile-pic-link {
             position: absolute;
-            top: 2.5rem;
-            right: 4.7rem;
+            top: 70px;
+            right: 60px;
             z-index: 25;
-            display: block;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             border-radius: 50%;
-            box-shadow: 0 3px 16px 2px rgba(30,20,13,0.10);
-            transition: box-shadow 0.25s, border-color 0.25s;
-            width: 70px;
-            height: 70px;
+            box-shadow: 0 4px 20px 3px rgba(30,20,13,0.15), 0 0 0 1px rgba(255,255,255,0.3) inset;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            width: 140px;
+            height: 140px;
             overflow: hidden;
-            border: 2.5px solid #f9e9cd;
+            border: 4px solid #f9e9cd;
             background: #fff;
+            cursor: pointer;
+            transform: rotate(2deg); /* Give it a slight organic tilt like it's pinned */
         }
 
         .profile-pic-link:hover {
-            box-shadow: 0 6px 22px 3px rgba(255,106,19,0.17), 0 2px 16px 2px rgba(30,20,13,0.17);
+            box-shadow: 0 8px 28px 4px rgba(255,106,19,0.22), 0 0 0 1px rgba(255,255,255,0.5) inset;
             border-color: #ffb86b;
+            transform: scale(1.05) rotate(0deg) translateY(-2px);
+        }
+
+        .profile-pic-link:active {
+            transform: scale(0.98);
         }
 
         .profile-pic-img {
@@ -455,10 +464,11 @@
             }
 
             .profile-pic-link {
-                right: 1.4rem;
-                top: 1.1rem;
-                width: 52px;
-                height: 52px;
+                right: 1.5rem;
+                top: 1rem;
+                width: 70px;
+                height: 70px;
+                border: 2px solid #f9e9cd;
             }
         }
 
@@ -474,6 +484,18 @@
 
             .spiral-rings {
                 display: none; /* Hide rings on small viewports for reading comfort */
+            }
+
+            .profile-pic-link {
+                right: 1.2rem;
+                top: 1.2rem;
+                width: 60px;
+                height: 60px;
+                border: 2px solid #f9e9cd;
+            }
+
+            .header-section {
+                padding-right: 45px;
             }
 
             .sketchy-box {
@@ -497,6 +519,37 @@
             .sketch-button {
                 font-size: 1.8rem;
                 padding: 0.7rem 2.2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .notebook-container {
+                margin: 0;
+                border-radius: 0;
+                padding: 3rem 1.5rem 3rem 2rem;
+            }
+
+            .notebook-container::before {
+                left: 20px;
+            }
+
+            .profile-pic-link {
+                right: 0.8rem;
+                top: 1rem;
+                width: 50px;
+                height: 50px;
+            }
+
+            .header-section {
+                padding-right: 35px;
+            }
+
+            .note-side {
+                font-size: 1.4rem;
+            }
+
+            h1 {
+                font-size: 2rem;
             }
         }
     </style>
@@ -538,12 +591,9 @@
             <div class="spiral-ring"></div>
         </div>
 
-        <!-- Decorative Coffee Stain -->
-        <div class="coffee-stain"></div>
-
         <!-- GitHub Profile Picture -->
         <a href="https://github.com/Tiyasbanerjee" target="_blank" class="profile-pic-link" title="Visit my GitHub profile">
-            <img src="https://avatars.githubusercontent.com/u/181446532?v=4&size=64" alt="GitHub Profile" class="profile-pic-img"/>
+            <img src="https://avatars.githubusercontent.com/u/181446532?v=4&size=280" alt="GitHub Profile" class="profile-pic-img"/>
         </a>
 
         <!-- Header Section -->
