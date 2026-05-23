@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hypothesis 02 | The 2D Particle Spread</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Merriweather:ital,wght@0,300;0,400;0,700;1,300;1,400&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Hand-Crafted Ink & Paper Palette */
+            --bg-desk-wood: #1e140d;
+            --paper-cream: #fbf8f0;
+            --ink-brown: #332219;
+            --ink-faint: #705b4e;
+            --accent-orange: #ff6a13;
+            --accent-orange-glow: rgba(255, 106, 19, 0.15);
+            --tape-amber: rgba(245, 166, 35, 0.32);
+            --tape-green: rgba(126, 188, 137, 0.32);
+            --tape-blue: rgba(74, 144, 226, 0.32);
+            --paper-bg: #ffffff;
+            --paper-text: #3f2f24;
+            --ink-brown-dark: #2b1f18;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-desk-wood);
+            /* High-fidelity, pure CSS dark wood planks background */
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.35) 0%, rgba(0, 0, 0, 0.8) 100%),
+                linear-gradient(90deg, 
+                    #17100b 0%, #17100b 3%, 
+                    #221811 3%, #221811 23%, 
+                    #1c130d 23%, #1c130d 26%, 
+                    #271b13 26%, #271b13 46%, 
+                    #1d140e 46%, #1d140e 49%, 
+                    #2c1f16 49%, #2c1f16 69%, 
+                    #211710 69%, #211710 72%, 
+                    #2f2117 72%, #2f2117 92%, 
+                    #1f160f 92%, #1f160f 95%, 
+                    #291d14 95%, #291d14 100%
+                );
+            background-size: 100% 100%, 380px 100%;
+            color: var(--ink-brown);
+            font-family: 'Inter', sans-serif;
+            line-height: 1.65;
+            overflow-x: hidden;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        /* ---------------------------------
+           Premium Textures & Ink Overlay
+           --------------------------------- */
+        .noise-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 25;
+            opacity: 0.05;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+        }
+
+        .data-curves {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.18;
+        }
+
+        /* ---------------------------------
+           Open Notebook Page Container
+           --------------------------------- */
+        .notebook-container {
+            position: relative;
+            z-index: 10;
+            max-width: 900px;
+            margin: 6vh auto;
+            padding: 5.5rem 5rem 5.5rem 6.5rem; /* Pushed right to accommodate margins and spiral binder */
+            background: var(--paper-cream);
+            border-radius: 4px 18px 18px 4px;
+            box-shadow: 
+                0 1px 2px rgba(0,0,0,0.1),
+                -4px 0 0 -2px #f4f0e3,
+                -4px 0 2px -1px rgba(0,0,0,0.15),
+                -8px 0 0 -4px #ece7d5,
+                -8px 0 4px -2px rgba(0,0,0,0.15),
+                -12px 0 0 -6px #e4deca,
+                -12px 0 6px -3px rgba(0,0,0,0.15),
+                10px 18px 30px rgba(0,0,0,0.4);
+            border: 1px solid #d0c9b5;
+            background-image: 
+                /* Fine research grid paper */
+                linear-gradient(rgba(141, 125, 102, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(141, 125, 102, 0.04) 1px, transparent 1px);
+            background-size: 24px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 4rem;
+        }
+
+        /* Red Left Margin Line */
+        .notebook-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 82px;
+            width: 2px;
+            background: rgba(220, 60, 60, 0.22);
+            pointer-events: none;
+        }
+
+        /* 3D Spiral Binder Rings */
+        .spiral-rings {
+            position: absolute;
+            left: -22px;
+            top: 40px;
+            bottom: 40px;
+            width: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .spiral-ring {
+            height: 14px;
+            width: 48px;
+            background: linear-gradient(180deg, #555 0%, #aaa 25%, #fff 40%, #888 60%, #444 80%, #666 100%);
+            border-radius: 7px;
+            box-shadow: 2px 3px 5px rgba(0,0,0,0.35);
+            transform: rotate(-3deg);
+            position: relative;
+        }
+
+        .spiral-ring::before {
+            content: '';
+            position: absolute;
+            left: 25px;
+            top: 3px;
+            width: 8px;
+            height: 8px;
+            background: #111;
+            border-radius: 50%;
+            opacity: 0.35;
+        }
+
+        /* ---------------------------------
+           Layout & Typography 
+           --------------------------------- */
+        .header-section {
+            position: relative;
+            margin-top: 1rem;
+        }
+
+        .body-section {
+            max-width: 750px;
+            position: relative;
+            align-self: flex-end;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            margin-right: 1rem;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.3rem, 4.8vw, 4rem);
+            line-height: 1.15;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: var(--ink-brown);
+        }
+
+        p {
+            font-family: 'Merriweather', serif;
+            font-size: 1.05rem;
+            line-height: 1.85;
+            font-weight: 300;
+            letter-spacing: 0.005em;
+            color: var(--ink-brown);
+        }
+
+        /* ---------------------------------
+           Hand-Drawn & Sketchy Elements
+           --------------------------------- */
+        .handwritten {
+            font-family: 'Caveat', cursive;
+            color: var(--accent-orange);
+            position: absolute;
+            transform: rotate(-4deg);
+            font-size: 1.55rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            text-shadow: 0 0 1px rgba(255, 106, 19, 0.05);
+        }
+
+        .note-top {
+            top: -35px;
+            left: 92px;
+            opacity: 0.85;
+            transform: rotate(-2deg);
+        }
+
+        .note-side {
+            right: -10px;
+            top: -45px;
+            transform: rotate(6deg);
+            font-size: 1.6rem;
+            max-width: 160px;
+            white-space: normal;
+            line-height: 1.15;
+            text-align: center;
+        }
+
+        /* Highlighter Marker effect */
+        .highlight-wrapper {
+            position: relative;
+            display: inline-block;
+            white-space: nowrap;
+            z-index: 1;
+        }
+
+        .highlight-wrapper::before {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            left: -2%;
+            width: 104%;
+            height: 38%;
+            background: rgba(255, 106, 19, 0.18);
+            z-index: -1;
+            transform: skewX(-8deg) rotate(-0.5deg);
+            border-radius: 4px;
+        }
+
+        .sketch-underline {
+            position: absolute;
+            bottom: -9px;
+            left: -5%;
+            width: 110%;
+            height: 20px;
+            pointer-events: none;
+            overflow: visible;
+        }
+
+        /* Taped Gridded Sheet Panel */
+        .sketchy-box {
+            padding: 3rem;
+            border: 1px solid #dcd5be;
+            border-radius: 3px;
+            background: #ffffff;
+            box-shadow: 2px 4px 15px rgba(0, 0, 0, 0.06);
+            transform: rotate(0.8deg);
+            background-image: 
+                linear-gradient(rgba(100, 150, 200, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(100, 150, 200, 0.04) 1px, transparent 1px);
+            background-size: 20px 20px;
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
+            position: relative;
+        }
+
+        .sketchy-box:hover {
+            transform: rotate(0deg) scale(1.005);
+            box-shadow: 4px 8px 20px rgba(0, 0, 0, 0.09);
+        }
+
+        /* Washi Tapes */
+        .washi-tape-top {
+            position: absolute;
+            top: -15px;
+            left: 20%;
+            width: 130px;
+            height: 30px;
+            background: var(--tape-amber);
+            backdrop-filter: blur(0.5px);
+            transform: rotate(-3deg);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            pointer-events: none;
+            z-index: 5;
+            clip-path: polygon(
+                3% 0%, 97% 0%, 100% 25%, 98% 45%, 100% 65%, 97% 85%, 100% 100%, 
+                97% 100%, 3% 100%, 0% 85%, 2% 65%, 0% 45%, 3% 25%
+            );
+        }
+
+        .washi-tape-bottom {
+            position: absolute;
+            bottom: -15px;
+            right: 18%;
+            width: 140px;
+            height: 30px;
+            background: var(--tape-green);
+            backdrop-filter: blur(0.5px);
+            transform: rotate(2deg);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            pointer-events: none;
+            z-index: 5;
+            clip-path: polygon(
+                3% 0%, 97% 0%, 100% 25%, 98% 45%, 100% 65%, 97% 85%, 100% 100%, 
+                97% 100%, 3% 100%, 0% 85%, 2% 65%, 0% 45%, 3% 25%
+            );
+        }
+
+        /* ---------------------------------
+           Simulation Grids & Taped Panels
+           --------------------------------- */
+        .experiment-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .paper-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2.2rem;
+        }
+
+        .paper-panel {
+            background: var(--paper-bg);
+            color: var(--paper-text);
+            border: 1px solid #dcd5be;
+            border-radius: 4px;
+            padding: 1.8rem;
+            box-shadow: 2px 5px 15px rgba(0,0,0,0.06);
+            position: relative;
+            transform: rotate(var(--panel-rotation, 0deg));
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            background-image: 
+                linear-gradient(rgba(100, 150, 200, 0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(100, 150, 200, 0.02) 1px, transparent 1px);
+            background-size: 15px 15px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .paper-panel:hover {
+            transform: rotate(0deg) scale(1.008);
+            box-shadow: 4px 10px 22px rgba(0,0,0,0.1);
+            z-index: 12;
+        }
+
+        .paper-grid > :nth-child(1) { --panel-rotation: -0.4deg; }
+        .paper-grid > :nth-child(2) { --panel-rotation: 0.6deg; }
+        .paper-grid > :nth-child(3) { --panel-rotation: -0.5deg; }
+
+        .paper-panel::after {
+            content: '';
+            position: absolute;
+            top: -12px;
+            left: 44%;
+            width: 80px;
+            height: 22px;
+            background: var(--tape-color, rgba(245, 166, 35, 0.3));
+            transform: rotate(var(--tape-rotation, -2deg));
+            pointer-events: none;
+            z-index: 10;
+            box-shadow: 0 1px 1px rgba(0,0,0,0.04);
+            clip-path: polygon(
+                5% 0%, 95% 0%, 100% 20%, 96% 50%, 100% 80%, 95% 100%, 
+                5% 100%, 0% 80%, 4% 50%, 0% 20%
+            );
+        }
+
+        .paper-grid > :nth-child(1)::after { --tape-color: var(--tape-amber); --tape-rotation: -3deg; }
+        .paper-grid > :nth-child(2)::after { --tape-color: var(--tape-blue); --tape-rotation: 2deg; }
+        .paper-grid > :nth-child(3)::after { --tape-color: var(--tape-green); --tape-rotation: -1deg; }
+
+        .panel-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.2rem;
+            gap: 0.6rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .panel-title {
+            font-family: 'Playfair Display', serif;
+            font-weight: 700;
+            color: var(--ink-brown-dark);
+            font-size: 1.3rem;
+            line-height: 1.1;
+        }
+
+        .panel-meta-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .panel-meta {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.88rem;
+            color: var(--ink-brown-dark);
+            background: rgba(141, 125, 102, 0.08);
+            border: 1px dashed rgba(91, 63, 44, 0.45);
+            padding: 0.25rem 0.55rem;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .sim-canvas,
+        .graph-canvas {
+            width: 100%;
+            height: 250px;
+            display: block;
+            border-radius: 3px;
+            background: #faf8f2;
+            border: 1px solid #ebdcb2cc;
+            position: relative;
+            z-index: 2;
+        }
+
+        .panel-caption {
+            font-family: 'Caveat', cursive;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: rgba(91, 63, 44, 0.75);
+            text-align: right;
+            margin-top: 0.3rem;
+            line-height: 1.25;
+            padding-right: 0.5rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* ---------------------------------
+           Sketched Control Stamp Panel
+           --------------------------------- */
+        .control-panel {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.75rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .sketch-control {
+            font-family: 'Caveat', cursive;
+            font-size: 1.45rem;
+            font-weight: 700;
+            color: var(--ink-brown-dark);
+            background: #e9e3d3;
+            border: 2px solid #5c4233;
+            border-radius: 20px 10px 22px 11px / 11px 24px 10px 20px;
+            padding: 0.35rem 1.2rem;
+            cursor: pointer;
+            box-shadow: 3px 3px 0px #5c4233;
+            transition: transform 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.25), box-shadow 0.15s ease, background-color 0.15s ease;
+        }
+
+        .sketch-control:hover {
+            transform: translateY(-2px) rotate(-1deg);
+            background-color: #f1edd8;
+            box-shadow: 4px 5px 0px #5c4233;
+        }
+
+        .sketch-control:active {
+            transform: translateY(2px) rotate(1deg);
+            box-shadow: 0px 1px 0px #5c4233;
+        }
+
+        .speed-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            margin-left: auto;
+            min-width: 210px;
+        }
+
+        .speed-label {
+            font-family: 'Caveat', cursive;
+            font-size: 1.35rem;
+            font-weight: 700;
+            color: var(--ink-brown-dark);
+            white-space: nowrap;
+        }
+
+        .speed-slider {
+            width: 100%;
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .speed-slider::-webkit-slider-runnable-track {
+            background: #5c4233;
+            height: 4px;
+            border-radius: 2px;
+        }
+
+        .speed-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--accent-orange);
+            border: 2.5px solid #5c4233;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            margin-top: -7px;
+            box-shadow: 1px 2px 3px rgba(0,0,0,0.3);
+            transition: transform 0.1s ease;
+        }
+
+        .speed-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .speed-value {
+            min-width: 66px;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.92rem;
+            color: var(--ink-brown-dark);
+            text-align: right;
+            font-weight: 600;
+        }
+
+        /* ---------------------------------
+           Sketched Thought Panel
+           --------------------------------- */
+        .thought-box {
+            background: rgba(74, 144, 226, 0.08);
+            border: 1px dashed rgba(74, 144, 226, 0.45);
+            border-radius: 12px 25px 15px 20px / 20px 15px 25px 12px;
+            padding: 2.5rem;
+            margin-top: 1rem;
+            position: relative;
+        }
+
+        .thought-box::before {
+            content: '“';
+            position: absolute;
+            top: 5px;
+            left: 20px;
+            font-family: 'Playfair Display', serif;
+            font-size: 4rem;
+            color: rgba(74, 144, 226, 0.2);
+            line-height: 1;
+        }
+
+        .thought-heading {
+            font-family: 'Caveat', cursive;
+            color: #d37318;
+            font-size: 4.8rem;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            transform: rotate(-1.5deg);
+            display: inline-block;
+            font-weight: 700;
+        }
+
+        /* ---------------------------------
+           Sticky Notes Peeling Off the Page
+           --------------------------------- */
+        .sticky-note {
+            background-color: #fbf0b9; /* Soft light yellow sticky note */
+            color: #2b1f17;
+            font-family: 'Caveat', cursive;
+            font-size: 1.8rem;
+            line-height: 1.35;
+            padding: 2.2rem;
+            border-radius: 2px 18px 4px 22px / 22px 4px 18px 2px;
+            box-shadow: 4px 8px 18px rgba(0, 0, 0, 0.22);
+            transform: rotate(-1.5deg);
+            margin: 3rem auto 4rem auto;
+            max-width: 92%;
+            position: relative;
+            border: 1px solid rgba(220, 200, 100, 0.4);
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s ease;
+        }
+
+        .sticky-note::before {
+            content: "..Note..";
+            display: block;
+            font-family: 'Caveat', cursive;
+            font-weight: 700;
+            color: #2b1f18;
+            text-align: center;
+            padding-bottom: 0.6rem;
+            border-bottom: 2px solid rgba(43, 31, 24, 0.25);
+            margin-bottom: 1rem;
+            letter-spacing: 2px;
+            font-size: 1.9rem;
+        }
+
+        .sticky-note:hover {
+            transform: rotate(0deg) scale(1.025);
+            box-shadow: 6px 12px 24px rgba(0, 0, 0, 0.28);
+        }
+
+        /* ---------------------------------
+           Aesthetic Coffee Cup Stain
+           --------------------------------- */
+        .coffee-stain {
+            position: absolute;
+            width: 155px;
+            height: 155px;
+            border-radius: 50%;
+            border: 4px solid rgba(119, 70, 30, 0.08); /* Organic coffee ring */
+            filter: blur(1.2px);
+            bottom: 120px;
+            left: 50px;
+            transform: rotate(-25deg);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .coffee-stain::before {
+            content: '';
+            position: absolute;
+            inset: 8px;
+            border-radius: 50%;
+            border: 1px dashed rgba(119, 70, 30, 0.06);
+        }
+
+        /* Next Page link styled as Cardboard Stamp Button */
+        .next-page-link-wrap {
+            align-self: center;
+            text-decoration: none;
+            margin-top: 1rem;
+        }
+
+        .next-page-link {
+            position: relative;
+            display: inline-block;
+            padding: 0.7rem 2.8rem;
+            background: #e9e3d3; /* Kraft paper stamp */
+            color: #4e3629;
+            font-family: 'Caveat', cursive;
+            font-size: 2.1rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            border: 2px solid #5c4233;
+            border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+            box-shadow: 4px 5px 0px #5c4233;
+            cursor: pointer;
+            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.25), box-shadow 0.2s ease, background-color 0.2s ease;
+        }
+
+        .next-page-link-wrap:hover .next-page-link {
+            background-color: #f1edd8;
+            transform: translateY(-3px) rotate(-1.5deg);
+            box-shadow: 6px 8px 0px #5c4233;
+        }
+
+        .next-page-link-wrap:active .next-page-link {
+            transform: translateY(4px) rotate(0.8deg);
+            box-shadow: 0px 1px 0px #5c4233;
+        }
+
+        /* ---------------------------------
+           Responsive Design
+           --------------------------------- */
+        @media (max-width: 900px) {
+            .notebook-container {
+                margin: 4vh 20px;
+                padding: 4.5rem 3rem 4.5rem 4.5rem;
+            }
+
+            .notebook-container::before {
+                left: 55px;
+            }
+
+            .spiral-rings {
+                left: -18px;
+            }
+
+            .spiral-ring {
+                width: 40px;
+            }
+
+            .coffee-stain {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .notebook-container {
+                padding: 3.5rem 2rem 3.5rem 3rem;
+                gap: 2.8rem;
+            }
+
+            .notebook-container::before {
+                left: 36px;
+            }
+
+            .spiral-rings {
+                display: none;
+            }
+
+            .sketchy-box {
+                padding: 1.8rem;
+            }
+
+            .note-side {
+                position: relative;
+                top: 0;
+                right: 0;
+                margin-top: 1rem;
+                display: block;
+                max-width: 100%;
+                text-align: left;
+            }
+
+            .speed-wrap {
+                width: 100%;
+                margin-left: 0;
+            }
+
+            .panel-meta-group {
+                flex-direction: column;
+                align-items: flex-end;
+                gap: 0.25rem;
+            }
+
+            .thought-box {
+                padding: 1.5rem;
+            }
+
+            .sticky-note {
+                font-size: 1.5rem;
+                padding: 1.5rem;
+                max-width: 100%;
+            }
+
+            .next-page-link {
+                font-size: 1.8rem;
+                padding: 0.7rem 2.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Premium Texture Overlay -->
+    <div class="noise-overlay"></div>
+
+    <!-- Background Pencil Draft Curves -->
+    <svg class="data-curves" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+        <path d="M-100 200 C 400 100, 800 600, 1600 500" fill="none" stroke="rgba(112, 91, 78, 0.22)" stroke-width="1.8" />
+        <path d="M-50 400 C 300 800, 700 900, 1500 750" fill="none" stroke="rgba(255, 106, 19, 0.1)" stroke-width="1.5" />
+        <path d="M100 -100 C 500 300, 900 800, 1400 1000" fill="none" stroke="rgba(255, 106, 19, 0.08)" stroke-width="2.5" />
+    </svg>
+
+    <!-- Main Notebook Structure -->
+    <div class="notebook-container">
+        
+        <!-- 3D binder spirals -->
+        <div class="spiral-rings">
+            <div class="spiral-ring"></div>
+            <div class="spiral-ring"></div>
+            <div class="spiral-ring"></div>
+            <div class="spiral-ring"></div>
+            <div class="spiral-ring"></div>
+            <div class="spiral-ring"></div>
+            <div class="spiral-ring"></div>
+            <div class="spiral-ring"></div>
+            <div class="spiral-ring"></div>
+            <div class="spiral-ring"></div>
+            <div class="spiral-ring"></div>
+            <div class="spiral-ring"></div>
+        </div>
+
+        <!-- Decorative Coffee Stain -->
+        <div class="coffee-stain"></div>
+
+        <!-- Header Section -->
+        <header class="header-section">
+            <span class="handwritten note-top">Hypothesis 02</span>
+            <h1>
+                The 2D Spatial <br>
+                <span class="highlight-wrapper">
+                    Expansion
+                    <!-- Sketchy SVG Underline -->
+                    <svg class="sketch-underline" viewBox="0 0 180 20" preserveAspectRatio="none">
+                        <path d="M5,15 Q90,5 175,12" fill="none" stroke="var(--accent-orange)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M10,18 Q85,8 170,16" fill="none" stroke="var(--accent-orange)" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+                    </svg>
+                </span>
+            </h1>
+        </header>
+
+        <!-- Body Section -->
+        <main class="body-section">
+            
+            <div class="sketchy-box">
+                <div class="washi-tape-top"></div>
+                <div class="washi-tape-bottom"></div>
+                <span class="handwritten note-side">Into two dimensions!</span>
+                <p>
+                    Understanding a line is neat, but the universe is expansive. Let's look at a collection of particles starting at the exact same point in a 2D grid space. On each time step, each particle has a perfectly equal 25% chance of taking a single step in one of four directions: Up, Down, Left, or Right.
+                    <br><br>
+                    If all steps are completely random and symmetric, do they just cancel out and huddle in the center? Or does the swarm expand outward? Let's run a spatial simulation of 35 particles and track their average radial distance from the origin.
+                </p>
+            </div>
+
+            <!-- Experiment Section -->
+            <section class="experiment-section" aria-label="Experiment simulation panels">
+                <div class="paper-grid">
+                    
+                    <!-- Panel 1: 2D Motion simulation -->
+                    <article class="paper-panel">
+                        <div class="panel-head">
+                            <h2 class="panel-title">2D Spatial Swarm Grid</h2>
+                            <span class="panel-meta" id="zoomReadout">Radius Indicator Shown</span>
+                        </div>
+                        <canvas id="simCanvas" class="sim-canvas" width="740" height="250" aria-label="2D Swarm Simulation"></canvas>
+                        <div class="panel-caption">Detail: 35 particles starting at the center. The dashed circle represents the average radial expansion.</div>
+                    </article>
+
+                    <!-- Panel 2: Radial Expansion Graph -->
+                    <article class="paper-panel">
+                        <div class="panel-head">
+                            <h2 class="panel-title">Mean Radial Distance vs. Time (Steps)</h2>
+                            <div class="panel-meta-group">
+                                <span class="panel-meta" id="averageReadout">Mean R: 0.00</span>
+                                <span class="panel-meta" id="stepReadout">Step: 0</span>
+                            </div>
+                        </div>
+                        <canvas id="graphCanvas" class="graph-canvas" width="740" height="250" aria-label="Radial distance graph"></canvas>
+                        <div class="panel-caption">Detail: The average distance from origin. Over time, it perfectly demonstrates a square-root scaling macro growth!</div>
+                    </article>
+
+                    <!-- Control Panel -->
+                    <article class="paper-panel">
+                        <div class="panel-head">
+                            <h2 class="panel-title">Control Panel</h2>
+                        </div>
+                        <div class="control-panel">
+                            <button id="playPauseBtn" class="sketch-control" type="button">Play</button>
+                            <button id="stepBtn" class="sketch-control" type="button">Take 1 Step</button>
+                            <button id="resetBtn" class="sketch-control" type="button">Reset</button>
+                            <div class="speed-wrap">
+                                <label for="speedSlider" class="speed-label">Simulation Speed</label>
+                                <input id="speedSlider" class="speed-slider" type="range" min="1" max="60" value="15" step="1">
+                                <span id="speedValue" class="speed-value">15 step/s</span>
+                            </div>
+                        </div>
+                        <div class="panel-caption">Detail: Adjust the speed to witness entropic spatial dispersal in real-time.</div>
+                    </article>
+
+                </div>
+            </section>
+
+            <!-- Expanded Thought Section -->
+            <section class="thought-box" aria-label="Thought">
+                <h2 class="thought-heading">mathematical magic?</h2>
+                <p>
+                    Witnessing this spatial spread, it becomes incredibly clear. The particles do not huddle at the starting block! Even though there is a 50/50 probability of cancellation in both dimensions, the cluster's average radius expands steadily.
+                    <br><br>
+                    Why? Because in 2D space, the volume of possible configurations increases with the square of the distance. As the system moves randomly, it naturally flows towards the states with the highest multiplicity. Entropy isn't a force pulling them out; it's simply the mathematical inevitability of random systems filling up the vast space of available configurations!
+                </p>
+            </section>
+
+            <!-- The Peeling Yellow Sticky Note -->
+            <div class="sticky-note">
+                Isn't it beautiful to realize that this very math dictates how a drop of ink spreads in a glass of water, or how hot molecules disperse to heat up a cold room? It is the exact same fundamental law. Nature is a mathematician who doodles in random walks!
+            </div>
+
+            <!-- Back to start -->
+            <a class="next-page-link-wrap" href="index.html">
+                <span class="next-page-link">Back to Start</span>
+            </a>
+
+        </main>
+
+    </div>
+
+    <script>
+        const simCanvas = document.getElementById('simCanvas');
+        const graphCanvas = document.getElementById('graphCanvas');
+        
+        const simCtx = simCanvas.getContext('2d');
+        const graphCtx = graphCanvas.getContext('2d');
+
+        const stepReadout = document.getElementById('stepReadout');
+        const averageReadout = document.getElementById('averageReadout');
+        
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const stepBtn = document.getElementById('stepBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        // Physics & Graph State
+        const particleCount = 35;
+        let particles = [];
+        let stepCount = 0;
+        let avgRadHistory = [0];
+        let maxGraphRad = 5;
+
+        // Loop State
+        let isPlaying = false;
+        let stepsPerSecond = Number(speedSlider.value);
+        let accumulator = 0;
+        let lastTime = null;
+
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: 0,
+                    y: 0,
+                    visualX: 0,
+                    visualY: 0,
+                    color: i % 2 === 0 ? '#2c6ed5' : '#d84f48'
+                });
+            }
+        }
+
+        // Helper to draw sketchy, hand-drawn wobbly lines
+        function sketchLine(ctx, x1, y1, x2, y2, color, width = 1.5, opacity = 0.8) {
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.globalAlpha = opacity;
+            
+            for (let pass = 0; pass < 2; pass++) {
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                
+                let dx = x2 - x1;
+                let dy = y2 - y1;
+                let len = Math.sqrt(dx*dx + dy*dy);
+                
+                if (len > 15) {
+                    let segments = Math.max(3, Math.floor(len / 35));
+                    for (let s = 1; s < segments; s++) {
+                        let t = s / segments;
+                        let px = x1 + dx * s / segments + (Math.random() - 0.5) * 1.2;
+                        let py = y1 + dy * s / segments + (Math.random() - 0.5) * 1.2;
+                        ctx.lineTo(px, py);
+                    }
+                    let overrun = pass === 0 ? 1.5 : -1.5;
+                    let angle = Math.atan2(dy, dx);
+                    let ex = x2 + Math.cos(angle) * overrun + (Math.random() - 0.5) * 0.8;
+                    let ey = y2 + Math.sin(angle) * overrun + (Math.random() - 0.5) * 0.8;
+                    ctx.lineTo(ex, ey);
+                } else {
+                    ctx.lineTo(x2, y2);
+                }
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        // Helper to draw sketchy wobbly circles
+        function sketchCircle(ctx, cx, cy, r, color, width = 1.5, opacity = 0.8) {
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            ctx.globalAlpha = opacity;
+
+            for (let pass = 0; pass < 2; pass++) {
+                ctx.beginPath();
+                let steps = 40;
+                for (let i = 0; i <= steps; i++) {
+                    let angle = (i / steps) * Math.PI * 2;
+                    let radJitter = r + (Math.random() - 0.5) * 1.5;
+                    let x = cx + Math.cos(angle) * radJitter;
+                    let y = cy + Math.sin(angle) * radJitter;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        function performStep() {
+            particles.forEach(p => {
+                let dir = Math.floor(Math.random() * 4);
+                if (dir === 0) p.x += 1;      // Right
+                else if (dir === 1) p.x -= 1; // Left
+                else if (dir === 2) p.y += 1; // Down
+                else p.y -= 1;               // Up
+            });
+
+            stepCount += 1;
+
+            let sumRad = 0;
+            particles.forEach(p => {
+                sumRad += Math.sqrt(p.x * p.x + p.y * p.y);
+            });
+            let avgRad = sumRad / particleCount;
+
+            avgRadHistory.push(avgRad);
+            if (avgRad > maxGraphRad) maxGraphRad = avgRad;
+
+            stepReadout.textContent = `Step: ${stepCount}`;
+            averageReadout.textContent = `Mean R: ${avgRad.toFixed(2)}`;
+        }
+
+        function resetSimulation() {
+            initParticles();
+            stepCount = 0;
+            avgRadHistory = [0];
+            maxGraphRad = 5;
+            accumulator = 0;
+            isPlaying = false;
+            
+            playPauseBtn.textContent = 'Play';
+            stepReadout.textContent = `Step: 0`;
+            averageReadout.textContent = `Mean R: 0.00`;
+            lastTime = null;
+        }
+
+        function resizeCanvasForDPR(canvas, ctx) {
+            const ratio = window.devicePixelRatio || 1;
+            const cssWidth = canvas.clientWidth;
+            const cssHeight = canvas.clientHeight;
+            const neededWidth = Math.round(cssWidth * ratio);
+            const neededHeight = Math.round(cssHeight * ratio);
+            if (canvas.width !== neededWidth || canvas.height !== neededHeight) {
+                canvas.width = neededWidth;
+                canvas.height = neededHeight;
+            }
+            ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+            return { width: cssWidth, height: cssHeight };
+        }
+
+        // Draw the 2D spatial walk
+        function drawSimulation() {
+            const { width: w, height: h } = resizeCanvasForDPR(simCanvas, simCtx);
+            simCtx.clearRect(0, 0, w, h);
+
+            const cx = w / 2;
+            const cy = h / 2;
+
+            // Calculate bounding scale
+            let maxCoord = 5;
+            particles.forEach(p => {
+                maxCoord = Math.max(maxCoord, Math.abs(p.visualX), Math.abs(p.visualY));
+            });
+            const scale = (Math.min(cx, cy) - 25) / (maxCoord + 1);
+
+            // Draw gridded axes (Sketched)
+            sketchLine(simCtx, 15, cy, w - 15, cy, 'rgba(91, 63, 44, 0.4)', 1.5, 0.7);
+            sketchLine(simCtx, cx, 15, cx, h - 15, 'rgba(91, 63, 44, 0.4)', 1.5, 0.7);
+
+            // Draw particles as dynamic wobbly ink blobs
+            particles.forEach(p => {
+                let px = cx + p.visualX * scale;
+                let py = cy + p.visualY * scale;
+                simCtx.fillStyle = p.color;
+                simCtx.beginPath();
+                simCtx.arc(px + (Math.random()-0.5)*0.5, py + (Math.random()-0.5)*0.5, 6.5, 0, Math.PI * 2);
+                simCtx.fill();
+            });
+
+            // Draw a wobbly handdrawn circle of average radial distance
+            if (avgRadHistory.length > 0) {
+                let currentAvgRad = avgRadHistory[avgRadHistory.length - 1];
+                simCtx.setLineDash([4, 4]);
+                sketchCircle(simCtx, cx, cy, currentAvgRad * scale, 'var(--accent-orange)', 2, 0.8);
+                simCtx.setLineDash([]);
+            }
+        }
+
+        // Draw radial distance vs step graph
+        function drawGraph() {
+            const { width: w, height: h } = resizeCanvasForDPR(graphCanvas, graphCtx);
+            graphCtx.clearRect(0, 0, w, h);
+
+            const padL = 46, padR = 16, padT = 20, padB = 34;
+            const graphW = Math.max(1, w - padL - padR);
+            const graphH = Math.max(1, h - padT - padB);
+            const n = avgRadHistory.length;
+
+            // Sketched Graph Axes
+            sketchLine(graphCtx, padL, padT - 10, padL, h - padB, 'rgba(91, 63, 44, 0.75)', 2, 0.85);
+            sketchLine(graphCtx, padL, h - padB, w - padR + 10, h - padB, 'rgba(91, 63, 44, 0.75)', 2, 0.85);
+
+            graphCtx.fillStyle = 'rgba(91, 63, 44, 0.92)';
+            graphCtx.font = '600 12px Inter';
+            graphCtx.fillText('0', padL - 14, h - padB + 14);
+            graphCtx.fillText(Math.ceil(maxGraphRad).toString(), padL - 32, padT + 4);
+            graphCtx.fillText('Time (Steps)', w - padR - 82, h - 8);
+            
+            graphCtx.save();
+            graphCtx.translate(14, padT + 70);
+            graphCtx.rotate(-Math.PI / 2);
+            graphCtx.fillText('Mean R from Origin', 0, 0);
+            graphCtx.restore();
+
+            if (n < 2) return;
+
+            const stepSize = Math.max(1, Math.ceil(n / (graphW * 2)));
+
+            // Draw wobbly radial average line
+            graphCtx.strokeStyle = 'var(--accent-orange)';
+            graphCtx.lineWidth = 3;
+            graphCtx.lineJoin = 'round';
+            graphCtx.beginPath();
+            
+            for (let i = 0; i < n; i += stepSize) {
+                let tRatio = i / (n - 1);
+                let x = padL + tRatio * graphW;
+                let y = h - padB - (avgRadHistory[i] / maxGraphRad) * graphH;
+                
+                let jitterX = Math.sin(i * 1.5) * 0.5;
+                let jitterY = Math.cos(i * 1.2) * 0.5;
+
+                if (i === 0) graphCtx.moveTo(x + jitterX, y + jitterY);
+                else graphCtx.lineTo(x + jitterX, y + jitterY);
+            }
+            if ((n - 1) % stepSize !== 0) {
+                let x = padL + graphW;
+                let y = h - padB - (avgRadHistory[n - 1] / maxGraphRad) * graphH;
+                graphCtx.lineTo(x, y);
+            }
+            graphCtx.stroke();
+        }
+
+        // Animation Loop
+        function frame(now) {
+            if (lastTime === null) {
+                lastTime = now;
+            }
+            
+            const dt = Math.min((now - lastTime) / 1000, 0.1);
+            lastTime = now;
+
+            if (isPlaying) {
+                accumulator += dt * stepsPerSecond;
+                while (accumulator >= 1) {
+                    performStep();
+                    accumulator -= 1;
+                }
+            }
+
+            // Lerp visual values towards actual grid physics positions
+            let lerpFactor = 1 - Math.exp(-dt * 15);
+            particles.forEach(p => {
+                p.visualX += (p.x - p.visualX) * lerpFactor;
+                p.visualY += (p.y - p.visualY) * lerpFactor;
+            });
+
+            drawSimulation();
+            drawGraph();
+            requestAnimationFrame(frame);
+        }
+
+        // Event Listeners
+        playPauseBtn.addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            playPauseBtn.textContent = isPlaying ? 'Pause' : 'Play';
+        });
+
+        stepBtn.addEventListener('click', () => {
+            performStep();
+            drawSimulation();
+            drawGraph();
+        });
+
+        resetBtn.addEventListener('click', () => {
+            resetSimulation();
+            drawSimulation();
+            drawGraph();
+        });
+
+        speedSlider.addEventListener('input', (event) => {
+            stepsPerSecond = Number(event.target.value);
+            speedValue.textContent = `${stepsPerSecond} step/s`;
+        });
+
+        window.addEventListener('resize', () => {
+            drawSimulation();
+            drawGraph();
+        });
+
+        // Initialize Call
+        initParticles();
+        drawSimulation();
+        drawGraph();
+        requestAnimationFrame(frame);
+
+    </script>
+</body>
+</html>
