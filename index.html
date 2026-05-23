@@ -400,6 +400,38 @@
         /* ---------------------------------
            Responsive Design
            --------------------------------- */
+        /* ---------------------------------
+           GitHub Profile Picture
+           --------------------------------- */
+        .profile-pic-link {
+            position: absolute;
+            top: 2.5rem;
+            right: 4.7rem;
+            z-index: 25;
+            display: block;
+            border-radius: 50%;
+            box-shadow: 0 3px 16px 2px rgba(30,20,13,0.10);
+            transition: box-shadow 0.25s, border-color 0.25s;
+            width: 70px;
+            height: 70px;
+            overflow: hidden;
+            border: 2.5px solid #f9e9cd;
+            background: #fff;
+        }
+
+        .profile-pic-link:hover {
+            box-shadow: 0 6px 22px 3px rgba(255,106,19,0.17), 0 2px 16px 2px rgba(30,20,13,0.17);
+            border-color: #ffb86b;
+        }
+
+        .profile-pic-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            border-radius: 50%;
+        }
+
         @media (max-width: 900px) {
             .notebook-container {
                 margin: 4vh 20px;
@@ -420,6 +452,13 @@
 
             .coffee-stain {
                 display: none;
+            }
+
+            .profile-pic-link {
+                right: 1.4rem;
+                top: 1.1rem;
+                width: 52px;
+                height: 52px;
             }
         }
 
@@ -501,6 +540,11 @@
 
         <!-- Decorative Coffee Stain -->
         <div class="coffee-stain"></div>
+
+        <!-- GitHub Profile Picture -->
+        <a href="https://github.com/Tiyasbanerjee" target="_blank" class="profile-pic-link" title="Visit my GitHub profile">
+            <img src="https://avatars.githubusercontent.com/u/181446532?v=4&size=64" alt="GitHub Profile" class="profile-pic-img"/>
+        </a>
 
         <!-- Header Section -->
         <header class="header-section">
