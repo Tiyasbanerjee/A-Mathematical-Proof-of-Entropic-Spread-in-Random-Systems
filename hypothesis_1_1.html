@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hypothesis 1.1 | The Probability of Meeting</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Inter:wght@400;600&family=Merriweather:ital,wght@0,300;0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-desk-wood: linear-gradient(105deg, #1f140d 0%, #2e1d13 40%, #1f140d 100%);
+            --paper-color: #fbf9f4;
+            --ink-black: #111827;
+            --ink-body: #374151;
+            --ink-handwritten: #b45309;
+            --red-margin: rgba(220, 38, 38, 0.4);
+            --grid-line: rgba(74, 144, 226, 0.15);
+            --particle-a: #2563eb;
+            --particle-b: #dc2626;
+            --stamp-bg: #e2cfa7;
+            --stamp-border: #8b4513;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background: var(--bg-desk-wood);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 40px 20px;
+            overflow-x: hidden;
+            color: var(--ink-body);
+            font-family: 'Merriweather', serif;
+        }
+
+        /* The Notebook Container */
+        .notebook-container {
+            position: relative;
+            width: 100%;
+            max-width: 900px;
+            background: var(--paper-color);
+            min-height: 1200px;
+            /* 3D stacked paper shadow */
+            box-shadow: 
+                0 0 20px rgba(0,0,0,0.6),
+                3px 3px 0 #ebe7df,
+                4px 4px 0 rgba(0,0,0,0.1),
+                6px 6px 0 #e4dfd4,
+                7px 7px 0 rgba(0,0,0,0.1),
+                9px 9px 0 #dcd6c8,
+                15px 15px 25px rgba(0,0,0,0.4);
+            border-radius: 2px 8px 8px 2px;
+            padding: 60px 50px 80px 100px; /* Left padding for rings/margin */
+        }
+
+        /* Left Margin Line */
+        .notebook-container::before {
+            content: '';
+            position: absolute;
+            left: 70px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--red-margin);
+            z-index: 5;
+        }
+
+        /* 3D Spiral Binder Rings */
+        .spiral-rings {
+            position: absolute;
+            left: -15px;
+            top: 40px;
+            bottom: 40px;
+            width: 40px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            z-index: 20;
+        }
+
+        .ring {
+            width: 35px;
+            height: 12px;
+            background: linear-gradient(to bottom, #d1d5db 0%, #9ca3af 20%, #f3f4f6 50%, #6b7280 100%);
+            border-radius: 6px;
+            box-shadow: 2px 2px 4px rgba(0,0,0,0.5), inset -1px -1px 2px rgba(0,0,0,0.3);
+            position: relative;
+        }
+
+        .ring::after {
+            content: '';
+            position: absolute;
+            right: 5px;
+            top: 2px;
+            width: 6px;
+            height: 8px;
+            background: #111;
+            border-radius: 50%;
+            box-shadow: inset 1px 1px 2px rgba(0,0,0,0.8);
+            z-index: -1;
+        }
+
+        /* Textures */
+        .noise-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            opacity: 0.4;
+            background: url('data:image/svg+xml;utf8,%3Csvg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg"%3E%3Cfilter id="noiseFilter"%3E%3CfeTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="3" stitchTiles="stitch"/%3E%3C/filter%3E%3Crect width="100%25" height="100%25" filter="url(%23noiseFilter)"/%3E%3C/svg%3E');
+            mix-blend-mode: multiply;
+            z-index: 10;
+        }
+
+        .coffee-stain {
+            position: absolute;
+            top: 15%;
+            right: -20px;
+            width: 250px;
+            height: 250px;
+            opacity: 0.15;
+            pointer-events: none;
+            mix-blend-mode: multiply;
+            z-index: 1;
+            transform: rotate(25deg);
+        }
+
+        /* Typography */
+        h1, h2, h3 {
+            font-family: 'Playfair Display', serif;
+            color: var(--ink-black);
+        }
+
+        .handwritten {
+            font-family: 'Caveat', cursive;
+            color: var(--ink-handwritten);
+            font-size: 1.6rem;
+            line-height: 1.2;
+        }
+
+        /* Elements */
+        .header-section {
+            position: relative;
+            margin-bottom: 50px;
+            z-index: 15;
+        }
+
+        .header-section h1 {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+        }
+
+        .sketch-underline {
+            width: 100%;
+            height: 15px;
+            display: block;
+            margin-top: -5px;
+        }
+
+        .floating-note-top {
+            position: absolute;
+            right: 0;
+            top: -20px;
+            transform: rotate(4deg);
+            background: rgba(255,255,255,0.8);
+            padding: 5px 15px;
+            border: 1px solid rgba(0,0,0,0.1);
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
+        }
+
+        /* Taped Down Panels */
+        .taped-panel {
+            position: relative;
+            background: #fff;
+            padding: 25px;
+            margin: 30px 0;
+            border-radius: 255px 15px 225px 15px/15px 225px 15px 255px; /* Sketchy wobbly border */
+            border: 1px solid rgba(0,0,0,0.1);
+            box-shadow: 2px 4px 10px rgba(0,0,0,0.05);
+            z-index: 15;
+        }
+
+        .grid-bg {
+            background-image: 
+                linear-gradient(var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-color: #fffdf8;
+        }
+
+        .washi-tape {
+            position: absolute;
+            background: rgba(240, 235, 225, 0.85);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+            backdrop-filter: blur(2px);
+            z-index: 20;
+            height: 25px;
+            width: 90px;
+            clip-path: polygon(2% 10%, 10% 0%, 92% 5%, 100% 12%, 98% 90%, 90% 100%, 8% 95%, 0% 88%);
+        }
+
+        .tape-top-left { top: -10px; left: -20px; transform: rotate(-35deg); }
+        .tape-top-right { top: -10px; right: -20px; transform: rotate(25deg); }
+        .tape-bottom-center { bottom: -12px; left: 50%; transform: translateX(-50%) rotate(2deg); width: 120px; }
+
+        /* Canvas Area */
+        .simulation-window {
+            margin-top: 40px;
+        }
+
+        canvas {
+            width: 100%;
+            height: 250px;
+            background: transparent;
+            cursor: crosshair;
+        }
+
+        .readout-panel {
+            font-family: 'Inter', sans-serif;
+            background: #f3f4f6;
+            padding: 10px 20px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 10px;
+            border: 1px solid #d1d5db;
+            font-weight: 600;
+            color: #1f2937;
+            box-shadow: inset 1px 1px 3px rgba(0,0,0,0.05);
+        }
+
+        /* Controls */
+        .control-panel {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .cardboard-btn {
+            font-family: 'Caveat', cursive;
+            font-size: 1.4rem;
+            color: var(--stamp-border);
+            background: var(--stamp-bg);
+            border: 2px solid var(--stamp-border);
+            padding: 8px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            box-shadow: 4px 4px 0px rgba(139, 69, 19, 0.4);
+            transition: all 0.1s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cardboard-btn:active {
+            transform: translate(2px, 2px);
+            box-shadow: 2px 2px 0px rgba(139, 69, 19, 0.4);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Caveat', cursive;
+            font-size: 1.3rem;
+            color: var(--ink-handwritten);
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 150px;
+            background: transparent;
+        }
+
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            background: var(--ink-body);
+            border-radius: 2px;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 10px;
+            background: var(--stamp-border);
+            margin-top: -8px;
+            cursor: pointer;
+            box-shadow: 2px 2px 0 rgba(0,0,0,0.3);
+        }
+
+        /* Thought Box (Conclusion) */
+        .thought-box {
+            position: relative;
+            background: rgba(74, 144, 226, 0.05);
+            border: 2px dashed #4a90e2;
+            padding: 30px;
+            margin: 50px 0;
+            border-radius: 10px;
+            z-index: 15;
+        }
+
+        .thought-box::before {
+            content: '“';
+            font-family: 'Playfair Display', serif;
+            font-size: 8rem;
+            color: rgba(74, 144, 226, 0.15);
+            position: absolute;
+            top: -40px;
+            left: 10px;
+            line-height: 1;
+        }
+
+        /* Pink Sticky Note */
+        .pink-sticky {
+            background: #ffb7b2;
+            width: 250px;
+            padding: 20px 20px 35px 20px;
+            position: relative;
+            transform: rotate(-3deg);
+            box-shadow: 3px 5px 10px rgba(0,0,0,0.15);
+            margin: 40px auto 20px auto;
+            z-index: 16;
+            transition: transform 0.3s;
+        }
+
+        .pink-sticky:hover {
+            transform: rotate(0deg) scale(1.02);
+        }
+        
+        .sticky-tape {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 20px;
+            background: rgba(255,255,255,0.5);
+            clip-path: polygon(5% 0%, 95% 5%, 100% 100%, 0% 95%);
+        }
+
+        .sticky-footer {
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            text-align: center;
+            left: 0;
+            font-weight: bold;
+            letter-spacing: 2px;
+            border-top: 1px dashed rgba(0,0,0,0.2);
+            padding-top: 5px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- SVG Definitions for Textures -->
+    <svg width="0" height="0" style="position:absolute;">
+        <defs>
+            <path id="coffee-path" d="M110,10 C150,-10 220,30 240,80 C260,130 220,190 180,220 C130,250 60,240 20,190 C-20,140 10,70 50,40 C70,25 90,20 110,10 Z" />
+        </defs>
+    </svg>
+
+    <div class="notebook-container">
+        <!-- Textures -->
+        <div class="noise-overlay"></div>
+        <svg class="coffee-stain" viewBox="0 0 250 250">
+            <use href="#coffee-path" fill="#8b4513" />
+            <use href="#coffee-path" fill="none" stroke="#5c2e0b" stroke-width="2" transform="scale(0.95) translate(5, 5)" opacity="0.5"/>
+        </svg>
+
+        <!-- Binder Rings generated via JS to keep HTML clean, or hardcoded -->
+        <div class="spiral-rings" id="rings-container">
+            <!-- Populated by JS -->
+        </div>
+
+        <div class="page-content">
+            <!-- Header -->
+            <div class="header-section">
+                <div class="floating-note-top handwritten">Horizontal constraints.</div>
+                <h1>Hypothesis 1.1 | The Probability of Meeting</h1>
+                <svg class="sketch-underline" viewBox="0 0 500 15" preserveAspectRatio="none">
+                    <path d="M 5 10 Q 125 0 250 10 T 495 8" fill="none" stroke="var(--ink-black)" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M 5 12 Q 130 2 250 12 T 495 10" fill="none" stroke="var(--ink-black)" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+                </svg>
+            </div>
+
+            <!-- Starting Note -->
+            <div class="taped-panel grid-bg">
+                <div class="washi-tape tape-top-left"></div>
+                <div class="washi-tape tape-bottom-center"></div>
+                <p class="handwritten" style="color: var(--ink-body);">[Starting Note Content Goes Here]</p>
+            </div>
+
+            <!-- Simulation Window -->
+            <div class="taped-panel simulation-window">
+                <div class="washi-tape tape-top-right"></div>
+                
+                <canvas id="sim-canvas" width="800" height="250"></canvas>
+                
+                <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div class="readout-panel">
+                        Distance |A - B| = <span id="distance-readout">0</span>
+                    </div>
+                </div>
+
+                <!-- Control Panel -->
+                <div class="control-panel">
+                    <button class="cardboard-btn" id="btn-play">Play</button>
+                    <button class="cardboard-btn" id="btn-step">Take 1 Step</button>
+                    <button class="cardboard-btn" id="btn-reset">Reset</button>
+                    <div class="slider-container">
+                        <label for="speed-slider">Speed</label>
+                        <input type="range" id="speed-slider" min="1" max="60" value="30">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conclusion Note -->
+            <div class="thought-box">
+                <p class="handwritten">[Conclusion Note Content Goes Here]</p>
+            </div>
+
+            <!-- Special Note -->
+            <div class="pink-sticky handwritten">
+                <div class="sticky-tape"></div>
+                <p>[Special Note Content Goes Here]</p>
+                <div class="sticky-footer">..Note..</div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Generate Rings
+        const ringContainer = document.getElementById('rings-container');
+        for(let i = 0; i < 22; i++) {
+            const ring = document.createElement('div');
+            ring.className = 'ring';
+            ringContainer.appendChild(ring);
+        }
+
+        // --- Simulation Logic ---
+        const canvas = document.getElementById('sim-canvas');
+        const ctx = canvas.getContext('2d');
+        const readout = document.getElementById('distance-readout');
+        const btnPlay = document.getElementById('btn-play');
+        const btnStep = document.getElementById('btn-step');
+        const btnReset = document.getElementById('btn-reset');
+        const speedSlider = document.getElementById('speed-slider');
+
+        let aX = 0;
+        let bX = 0;
+        let playing = false;
+        let bounds = 10; // Initial axis boundaries (-10 to 10)
+        let lastTime = 0;
+
+        // Custom Jitter Function to maintain the "Hand-drawn" look
+        function sketchLine(ctx, x1, y1, x2, y2, color, width) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = width;
+            
+            // Pass 1
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            let cx1 = x1 + (x2 - x1) * 0.33 + (Math.random() - 0.5) * 3;
+            let cy1 = y1 + (y2 - y1) * 0.33 + (Math.random() - 0.5) * 3;
+            let cx2 = x1 + (x2 - x1) * 0.66 + (Math.random() - 0.5) * 3;
+            let cy2 = y1 + (y2 - y1) * 0.66 + (Math.random() - 0.5) * 3;
+            ctx.bezierCurveTo(cx1, cy1, cx2, cy2, x2, y2);
+            ctx.stroke();
+
+            // Pass 2 (Jitter overlay)
+            ctx.beginPath();
+            ctx.moveTo(x1, y1);
+            cx1 = x1 + (x2 - x1) * 0.33 + (Math.random() - 0.5) * 3;
+            cy1 = y1 + (y2 - y1) * 0.33 + (Math.random() - 0.5) * 3;
+            cx2 = x1 + (x2 - x1) * 0.66 + (Math.random() - 0.5) * 3;
+            cy2 = y1 + (y2 - y1) * 0.66 + (Math.random() - 0.5) * 3;
+            ctx.bezierCurveTo(cx1, cy1, cx2, cy2, x2, y2);
+            ctx.stroke();
+        }
+
+        function sketchCircle(ctx, x, y, r, strokeCol, fillCol) {
+            ctx.fillStyle = fillCol;
+            ctx.beginPath();
+            ctx.arc(x, y, r, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.strokeStyle = strokeCol;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for(let i = 0; i <= Math.PI * 2; i += 0.5) {
+                let jx = x + Math.cos(i) * (r + (Math.random() - 0.5) * 1.5);
+                let jy = y + Math.sin(i) * (r + (Math.random() - 0.5) * 1.5);
+                if(i === 0) ctx.moveTo(jx, jy);
+                else ctx.lineTo(jx, jy);
+            }
+            ctx.closePath();
+            ctx.stroke();
+        }
+
+        function resizeCanvas() {
+            // Handle high DPI displays for crisp rendering
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio;
+            canvas.height = rect.height * window.devicePixelRatio;
+            ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+        }
+
+        function step() {
+            // 50/50 chance to move -1 or +1
+            aX += Math.random() < 0.5 ? -1 : 1;
+            bX += Math.random() < 0.5 ? -1 : 1;
+
+            // Dynamic camera scaling
+            let maxAbs = Math.max(Math.abs(aX), Math.abs(bX));
+            if (maxAbs >= bounds - 2) {
+                bounds = maxAbs + 5;
+            }
+
+            readout.innerText = Math.abs(aX - bX);
+        }
+
+        function draw() {
+            const w = canvas.width / window.devicePixelRatio;
+            const h = canvas.height / window.devicePixelRatio;
+            
+            ctx.clearRect(0, 0, w, h);
+
+            let cx = w / 2;
+            let cy = h / 2;
+            let padding = 40;
+            let scale = (w / 2 - padding) / bounds;
+
+            // Draw Main X-Axis
+            sketchLine(ctx, padding/2, cy, w - padding/2, cy, "rgba(17, 24, 39, 0.6)", 1.5);
+
+            // Draw Tick Marks
+            ctx.font = "12px Inter";
+            ctx.fillStyle = "rgba(17, 24, 39, 0.8)";
+            ctx.textAlign = "center";
+            
+            // Determine tick interval based on bounds to prevent crowding
+            let tickInterval = Math.max(1, Math.ceil(bounds / 10));
+
+            for(let i = -bounds; i <= bounds; i++) {
+                if (i % tickInterval !== 0 && i !== 0) continue;
+                
+                let x = cx + i * scale;
+                if(x > padding/2 && x < w - padding/2) {
+                    sketchLine(ctx, x, cy - 6, x, cy + 6, "rgba(17, 24, 39, 0.4)", 1.5);
+                    
+                    // Draw label for origin and intervals
+                    if(i === 0 || i % (tickInterval * 2) === 0) {
+                        ctx.fillText(i, x, cy + 24);
+                    }
+                }
+            }
+
+            // Draw Particles
+            let pax = cx + aX * scale;
+            let pbx = cx + bX * scale;
+
+            // Connecting distance line (faint)
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(pax, cy - 25);
+            ctx.lineTo(pbx, cy - 25);
+            ctx.strokeStyle = "rgba(0,0,0,0.3)";
+            ctx.stroke();
+            ctx.setLineDash([]);
+            
+            // Downward pointing lines from distance bar
+            sketchLine(ctx, pax, cy - 25, pax, cy, "rgba(0,0,0,0.3)", 1);
+            sketchLine(ctx, pbx, cy - 25, pbx, cy, "rgba(0,0,0,0.3)", 1);
+
+            // Particle A (Blue)
+            sketchCircle(ctx, pax, cy, 8, "#2563eb", "rgba(37, 99, 235, 0.2)");
+            // Particle B (Red)
+            sketchCircle(ctx, pbx, cy, 8, "#dc2626", "rgba(220, 38, 38, 0.2)");
+        }
+
+        function loop(timestamp) {
+            // Speed calculation based on slider (1 = slow, 60 = fast)
+            // Reverse mapping: value 60 = delay ~16ms. value 1 = delay ~1000ms
+            let msDelay = 1000 - (speedSlider.value * 16); 
+            if (msDelay < 16) msDelay = 16;
+
+            if (playing && timestamp - lastTime > msDelay) {
+                step();
+                lastTime = timestamp;
+            }
+
+            // We constantly redraw to maintain the hand-drawn squigglevision jitter effect
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        // Event Listeners
+        btnPlay.addEventListener('click', () => {
+            playing = !playing;
+            btnPlay.innerText = playing ? "Pause" : "Play";
+        });
+
+        btnStep.addEventListener('click', () => {
+            playing = false;
+            btnPlay.innerText = "Play";
+            step();
+        });
+
+        btnReset.addEventListener('click', () => {
+            playing = false;
+            btnPlay.innerText = "Play";
+            aX = 0;
+            bX = 0;
+            bounds = 10;
+            readout.innerText = "0";
+        });
+
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+        });
+
+        // Init
+        resizeCanvas();
+        requestAnimationFrame(loop);
+
+    </script>
+</body>
+</html>
